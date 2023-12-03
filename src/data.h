@@ -65,8 +65,12 @@ void send_sensor_data() {
         http.end();
 
 #ifdef DEBUG
-        Serial.print("Data API Response: ");
-        Serial.println(httpResponseCode);
+        if (httpResponseCode == 200) {
+            Serial.println("Sensor data sent");
+        } else {
+            Serial.print("Data API Error: ");
+            Serial.println(HTTPClient::errorToString(httpResponseCode));
+        }
 #endif
     }
 }
