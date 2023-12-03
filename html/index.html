@@ -97,22 +97,22 @@
 <h1>Monitor Settings</h1>
 <script type=module>
     const SettingsMap = {
-        "t_cal": "Temperature calibration",
-        "h_cal": "Humidity calibration",
-        "t_anim_delay": "Screen animation delay",
-        "t_loop_delay": "Screen repeat delay",
+        "t_cal": "Temperature calibration, Cº",
+        "h_cal": "Humidity calibration, %",
+        "t_anim_delay": "Screen animation delay, ms",
+        "t_loop_delay": "Screen repeat delay, ms",
         "wifi_max_attempts": "Wi-Fi Max connection attempts",
-        "upd_interval": "Sensors update interval",
-        "send_int": "Sensors sent interval",
-        "s_rot": "Screen rotation",
-        "s_brt": "Screen brightness",
+        "upd_interval": "Sensors update interval, ms",
+        "send_int": "Sensors sent interval, ms",
+        "s_rot": "Screen rotation (0-3)",
+        "s_brt": "Screen brightness, (0-15)",
         "snd": "Sound indication",
         "alert_temp": "Alert Temperature",
         "alert_hum": "Alert Humidity",
         "enabled": "Enabled",
-        "int": "Interval",
-        "min": "Min",
-        "max": "Max",
+        "int": "Indication interval, ms",
+        "min": "Min value",
+        "max": "Max value",
     }
 
     function _createSection(section, obj) {
