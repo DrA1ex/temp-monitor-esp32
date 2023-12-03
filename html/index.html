@@ -95,6 +95,8 @@
 </head>
 <body>
 <h1>Monitor Settings</h1>
+
+<p id="loader">Loading...</p>
 <script type=module>
     const SettingsMap = {
         "t_cal": "Temperature calibration, Cº",
@@ -199,6 +201,8 @@
     }
 
     const config = await getConfig();
+
+    document.getElementById("loader").remove();
     _createSection("", config);
 
     const reset = document.createElement("a");
