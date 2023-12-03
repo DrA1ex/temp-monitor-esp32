@@ -32,6 +32,8 @@ static const Alert Alerts[] = {
 static HTTPClient http;
 static WiFiClientSecure client;
 
+[[noreturn]] void data_loop(void *);
+
 void process_alerts() {
     const int count = sizeof(Alerts) / sizeof Alerts[0];
     for (int i = 0; i < count; ++i) {
