@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include "pins.h"
+#include "hardware.h"
 #include "settings.h"
 
 const unsigned int SOUND_WIFI_ON[] = {

@@ -1,11 +1,13 @@
 #pragma once
 
-#include "debug.h"
-
 #include <EEPROM.h>
+
+#include "debug.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
 #define SETTINGS_VERSION (int) 1
+
+class WebServer;
 
 struct AlertEntry {
     boolean enabled;

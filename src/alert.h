@@ -1,11 +1,18 @@
 #pragma once
 
 #include <Arduino.h>
+
 #include "settings.h"
 #include "sound.h"
 
 #define ALERT_HUMIDITY 0u
 #define ALERT_TEMPERATURE 1u
+
+struct Alert {
+    const int key;
+    const AlertEntry &entry_prop;
+    const volatile float &value;
+};
 
 static unsigned long alert_time[] = {0ul, 0ul};
 
