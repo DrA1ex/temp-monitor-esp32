@@ -9,6 +9,12 @@ const unsigned int SOUND_WIFI_ON[] = {
         1046, 240
 };
 
+const unsigned int SOUND_WIFI_FAIL[] = {
+        1046, 120,
+        880, 120,
+        587, 240
+};
+
 const unsigned int SOUND_ALERT[] = {
         880, 120,
         698, 120

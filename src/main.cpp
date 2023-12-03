@@ -88,7 +88,7 @@ void wifi_connect() {
     WiFi.setSleep(WIFI_PS_NONE);
     WiFi.begin(ssid, password);
 
-    int attempt = 0;
+    unsigned int attempt = 0;
     while (WiFiClass::status() != WL_CONNECTED && attempt < settings.get().wifi_max_connect_attempts) {
         matrix.fillScreen(LOW);
         matrix.drawChar((int16_t) (attempt % width - spacer), 0, '.', HIGH, LOW, 1);
@@ -99,6 +99,11 @@ void wifi_connect() {
     }
 
     if (WiFiClass::status() != WL_CONNECTED) {
+        matrix.fillScreen(LOW);
+        matrix.drawChar(0, 0, 'F', HIGH, LOW, 1);
+        matrix.write();
+
+        play_sound(SOUND_WIFI_FAIL);
         xSemaphoreGive(wifi_connection_mutex);
 
         ESP.restart();
@@ -143,6 +148,14 @@ void update_sensor_data() {
 
         update_sensor_data();
         process_alerts();
+
+        if (WiFiClass::status() != WL_CONNECTED) {
+#ifdef DEBUG
+            Serial.println("WiFi lost connection");
+#endif
+            wifi_connect();
+        }
+
         send_sensor_data();
 
         delay(1000);
@@ -193,13 +206,6 @@ void send_sensor_data() {
     const auto &config = settings.get();
     if (last_sensor_sent == 0ul || (millis() - last_sensor_sent) > config.sensor_send_interval) {
         last_sensor_sent = millis();
-
-        if (WiFiClass::status() != WL_CONNECTED) {
-#ifdef DEBUG
-            Serial.println("WiFi lost connection");
-#endif
-            wifi_connect();
-        }
 
         String result;
         StaticJsonDocument<64> doc;
