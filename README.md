@@ -1,2 +1,3 @@
-# temp-monitor-esp32
-Humidity/Temperature monitor with Web UI for ESP32
+# Temperature/Humidity Monitor for ESP32
+
+May be used with [co2-temp-monitor](https://github.com/DrA1ex/co2-temp-monitor)
