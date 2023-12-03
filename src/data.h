@@ -43,12 +43,15 @@ void process_alerts() {
 void send_sensor_data() {
     const auto &config = settings.get();
     if (last_sensor_sent == 0ul || (millis() - last_sensor_sent) > config.sensor_send_interval) {
+#ifdef DEBUG
+        Serial.println("Sending sensor data...");
+#endif
         last_sensor_sent = millis();
 
         String result;
         StaticJsonDocument<64> doc;
         if (!isnan(sensor_data.temperature)) doc["Tamb"] = sensor_data.temperature;
-        if (!isnan(sensor_data.temperature)) doc["Hum"] = sensor_data.humidity;
+        if (!isnan(sensor_data.humidity)) doc["Hum"] = sensor_data.humidity;
         serializeJson(doc, result);
 
         http.setConnectTimeout(connection_timeout);
@@ -62,7 +65,7 @@ void send_sensor_data() {
         http.end();
 
 #ifdef DEBUG
-        Serial.print("API Response: ");
+        Serial.print("Data API Response: ");
         Serial.println(httpResponseCode);
 #endif
     }
@@ -80,6 +83,7 @@ void update_sensor_data() {
         last_sensor_update = millis();
 
 #ifdef DEBUG
+        Serial.print("Sensor Data: ");
         Serial.print(sensor_data.temperature);
         Serial.print("С ");
         Serial.print(sensor_data.humidity);
