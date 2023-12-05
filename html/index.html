@@ -26,7 +26,7 @@
         }
 
         h1 {
-            margin: 2rem auto 1.5rem
+            margin: 2rem auto 1rem
         }
 
         h3 {
@@ -128,6 +128,7 @@
                 sectionTitle.innerText = SettingsMap[section.split(".").reverse()[0]];
                 document.body.appendChild(sectionTitle);
             }
+
             for (const [key, value] of Object.entries(obj)) {
                 const path = [section, key].filter(s => s).join(".");
                 if (typeof value === "object") {
@@ -179,7 +180,7 @@
                 await fetch("./settings", {method: "POST", body});
             } finally {
                 const newValue = await getConfig(path);
-                input.value = newValue;
+                input.value = Number.isFinite(newValue) && !Number.isInteger(newValue) ? newValue.toFixed(2) : newValue;
                 input.setAttribute("data-value", newValue);
                 input.setAttribute("data-saving", "false");
                 input.removeAttribute("disabled");
@@ -205,6 +206,29 @@
             }
         }
 
+        const Sensors = {
+            temp: {el: document.getElementById("temp"), fraction: 2},
+            hum: {el: document.getElementById("hum"), fraction: 0},
+            lat: {el: document.getElementById("lat"), fraction: 0}
+        }
+
+        async function _updateSensors() {
+            let data = {};
+            try {
+                data = await fetch("/sensor").then(f => f.json());
+            } catch (e) {
+                console.log("Unable to load sensor data", e);
+            }
+
+            for (const [key, {el, fraction}] of Object.entries(Sensors)) {
+                el.innerText = data[key]?.toFixed(fraction) ?? "???";
+            }
+
+            setTimeout(_updateSensors, 3000);
+        }
+
+        _updateSensors();
+
         const config = await getConfig();
 
         document.getElementById("loader").remove();
@@ -220,5 +244,11 @@
 <body>
 <div class="bg"></div>
 <h1>Monitor Settings</h1>
+<p>
+    Temperature: <span id="temp">...</span> Cº
+    Humidity: <span id=hum>...</span>%
+    Sent latency: <span id="lat">...</span> sec
+</p>
+
 <p id="loader">Loading...</p>
 </body>

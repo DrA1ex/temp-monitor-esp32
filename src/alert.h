@@ -15,6 +15,7 @@ struct Alert {
 
     const char *name;
     const char *unit;
+    unsigned int fraction;
 };
 
 static unsigned long alert_time[] = {0ul, 0ul, 0ul};

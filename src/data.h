@@ -20,6 +20,17 @@ struct SensorData {
     volatile unsigned long last_send = 0;
 
     String display_string = "";
+
+    String json() const {
+        StaticJsonDocument<128> doc;
+        doc["temp"] = temperature;
+        doc["hum"] = humidity;
+        doc["lat"] = float(millis() - last_send) / 1000;
+
+        String result;
+        serializeJson(doc, result);
+        return result;
+    }
 };
 
 enum State : uint8_t {
@@ -38,9 +49,9 @@ static SensorData sensor_data;
 static String alert_display_string = "";
 
 static const Alert Alerts[] = {
-        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%"},
-        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature,  "TEMP",    "C"},
-        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s"},
+        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%", 0},
+        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature,  "TEMP",    "C", 1},
+        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s", 0},
 };
 
 static HTTPClient http;
@@ -51,13 +62,13 @@ static WiFiClientSecure client;
 void process_alerts() {
     if (current_state != DISPLAY_SENSOR) return;
 
-    for (auto alert_value: Alerts) {
-        const boolean activated = alert(alert_value.key, alert_value.value, alert_value.entry_prop);
+    for (auto config: Alerts) {
+        const boolean activated = alert(config.key, config.value, config.entry_prop);
         if (activated) {
             current_state = PENDING_ALERT;
-            alert_display_string = String("ALERT ") + alert_value.name + ": "
-                                   + String(alert_value.value, 1) + " "
-                                   + String(alert_value.unit);
+            alert_display_string = String("ALERT ") + config.name + ": "
+                                   + String(config.value, config.fraction) + " "
+                                   + String(config.unit);
 
             return;
         };

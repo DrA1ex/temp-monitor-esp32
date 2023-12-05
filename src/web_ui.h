@@ -13,6 +13,9 @@ static WebServer server(80);
     server.on("/settings", HTTPMethod::HTTP_GET, [] {
         server.send(200, "application/json", settings.json());
     });
+    server.on("/sensor", HTTPMethod::HTTP_GET, [] {
+        server.send(200, "application/json", sensor_data.json());
+    });
     server.on("/settings", HTTPMethod::HTTP_POST, [] {
         if (settings.update_settings(server)) {
             server.send(200, "plain/text", "OK");

@@ -59,7 +59,7 @@ void Settings::update_settings(update_fn fn) {
     commit();
 }
 
-JsonObject write_alert(JsonObject obj, AlertEntry &entry) {
+JsonObject write_alert(JsonObject obj, const AlertEntry &entry) {
     obj[ALERT_ENABLED] = entry.enabled;
     obj[ALERT_INTERVAL] = entry.alert_interval;
     obj[ALERT_MIN] = entry.min;
@@ -68,7 +68,7 @@ JsonObject write_alert(JsonObject obj, AlertEntry &entry) {
     return obj;
 }
 
-String Settings::json() {
+String Settings::json() const {
     StaticJsonDocument<1024> doc;
 
     doc[TEMP_CALIBRATION] = _data.temperature_calibration;

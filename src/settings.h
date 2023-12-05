@@ -53,7 +53,7 @@ public:
 
     inline const SettingsEntry &get() const { return _data; }
 
-    String json();
+    String json() const;
 
     boolean update_settings(WebServer &server);
 
