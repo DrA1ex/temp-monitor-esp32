@@ -10,6 +10,7 @@
 
 const int numberOfHorizontalDisplays = 1;
 const int numberOfVerticalDisplays = 1;
+
 const int spacer = 1;
 const int width = 5 + spacer;
 const int end_spacer = width * 2;
