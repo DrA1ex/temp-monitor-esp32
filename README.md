@@ -24,3 +24,9 @@ This project is designed to be developed using [PlatformIO](https://platformio.o
 
 3. **Hardware Configuration**
    - Adjust pin configurations in [/src/hardware.h](/src/hardware.h) to match your hardware setup.
+
+## Web UI
+
+To configure monitor visit Web UI at adress `http://<YOUR-ESP32-IP>/`
+
+![UI](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/d995ae59-028e-4cdd-9960-5aada7aa3bea)
