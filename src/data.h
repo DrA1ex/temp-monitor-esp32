@@ -22,14 +22,25 @@ struct SensorData {
     String display_string = "";
 };
 
+enum State : uint8_t {
+    DISPLAY_SENSOR,
+    PENDING_ALERT,
+    DISPLAY_ALERT,
+};
+
+
 static unsigned long last_sensor_update = 0ul;
 static unsigned long last_sensor_send_try = 0ul;
 
+volatile static State current_state = DISPLAY_SENSOR;
+
 static SensorData sensor_data;
+static String alert_display_string = "";
+
 static const Alert Alerts[] = {
-        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity},
-        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature},
-        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency},
+        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%"},
+        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature,  "TEMP",    "C"},
+        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s"},
 };
 
 static HTTPClient http;
@@ -38,8 +49,18 @@ static WiFiClientSecure client;
 [[noreturn]] void data_loop(void *);
 
 void process_alerts() {
+    if (current_state != DISPLAY_SENSOR) return;
+
     for (auto alert_value: Alerts) {
-        alert(alert_value.key, alert_value.value, alert_value.entry_prop);
+        const boolean activated = alert(alert_value.key, alert_value.value, alert_value.entry_prop);
+        if (activated) {
+            current_state = PENDING_ALERT;
+            alert_display_string = String("ALERT ") + alert_value.name + ": "
+                                   + String(alert_value.value, 1) + " "
+                                   + String(alert_value.unit);
+
+            return;
+        };
     }
 }
 
@@ -90,8 +111,8 @@ void update_sensor_data() {
         sensor_data.humidity = dht.readHumidity() + config.humidity_calibration;
         sensor_data.temperature = dht.readTemperature() + config.temperature_calibration;
 
-        sensor_data.display_string = String(sensor_data.temperature, 1) + " C" + "   "
-                                     + String(sensor_data.humidity, 0) + " %   ";
+        sensor_data.display_string = String(sensor_data.temperature, 1) + " C" + "  "
+                                     + String(sensor_data.humidity, 0) + " %";
 
         last_sensor_update = millis();
 
@@ -123,4 +144,33 @@ void update_sensor_data() {
 
         delay(1000);
     }
+}
+
+String &get_current_display_string() {
+    switch (current_state) {
+        case DISPLAY_ALERT:
+            return alert_display_string;
+
+        case DISPLAY_SENSOR:
+        case PENDING_ALERT:
+        default:
+            return sensor_data.display_string;
+    }
+}
+
+void next_status() {
+    State next;
+    switch (current_state) {
+        case PENDING_ALERT:
+            next = DISPLAY_ALERT;
+            break;
+
+        case DISPLAY_SENSOR:
+        case DISPLAY_ALERT:
+        default:
+            next = DISPLAY_SENSOR;
+            break;
+    }
+
+    current_state = next;
 }

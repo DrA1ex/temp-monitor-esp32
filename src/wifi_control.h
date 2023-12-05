@@ -17,7 +17,7 @@ bool is_connected() {
 void wifi_connect() {
     while (xSemaphoreTake(wifi_connection_mutex, mutex_wait_time) != pdTRUE) {
 #ifdef DEBUG
-        Serial.println("Can't take (wifi_connect)");
+        Serial.println("Can't take mutex (wifi_connect)");
 #endif
     }
 

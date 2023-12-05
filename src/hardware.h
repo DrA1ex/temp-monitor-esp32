@@ -12,6 +12,7 @@ const int numberOfHorizontalDisplays = 1;
 const int numberOfVerticalDisplays = 1;
 const int spacer = 1;
 const int width = 5 + spacer;
+const int end_spacer = width * 2;
 const int height = 8;
 
 static Max72xxPanel matrix = Max72xxPanel(PIN_MATRIX_CS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
