@@ -1,0 +1,210 @@
+<!doctypehtml>
+
+<meta content="text/html; charset=utf-8" http-equiv=Content-type>
+<head>
+    <meta content="width=device-width,initial-scale=1,user-scalable=no" name=viewport>
+    <title>Settings</title>
+    <style>html {
+        font-family: sans-serif;
+        margin: 0 auto;
+        text-align: center
+    }
+
+    body {
+        margin-top: 1rem
+    }
+
+    h1 {
+        color: #444;
+        margin: 2rem auto 1.5rem
+    }
+
+    h3 {
+        color: #444;
+        margin-bottom: 2rem
+    }
+
+    .button, .input {
+        display: block;
+        width: 60vw;
+        max-width: 20rem;
+        background-color: #3498db;
+        border: none;
+        color: #fff;
+        padding: 1rem 1rem;
+        font-size: 2rem;
+        margin: 0 auto 2rem;
+        text-align: center;
+        cursor: pointer;
+        border-radius: .25rem
+    }
+
+    .button[data-saving=true], .input[data-saving=true] {
+        animation: saving infinite 2s;
+    }
+
+    .button[data-value=true] {
+        background-color: #3498db
+    }
+
+    .button[data-value=true]::before {
+        content: "ON"
+    }
+
+    .button[data-value=true]:not([disabled]):active {
+        background-color: #2980b9
+    }
+
+    .button[data-value=false] {
+        background-color: #34495e
+    }
+
+    .button[data-value=false]::before {
+        content: "OFF"
+    }
+
+    .button[data-value=false]:not([disabled]):active {
+        background-color: #2c3e50
+    }
+
+    .button-danger {
+        margin-top: 8rem;
+        background-color: #5e3434
+    }
+
+    p {
+        font-size: 1rem;
+        color: #888;
+        margin-bottom: 0.75rem
+    }
+
+    @keyframes saving {
+        0% {
+            background-color: #5e646d;
+        }
+
+        50% {
+            background-color: #858c9a;
+        }
+
+        0% {
+            background-color: #5e646d;
+        }
+    }
+    </style>
+</head>
+<body>
+<h1>Monitor Settings</h1>
+<script type=module>
+    const SettingsMap = {
+        "t_cal": "Temperature calibration",
+        "h_cal": "Humidity calibration",
+        "t_anim_delay": "Screen animation delay",
+        "t_loop_delay": "Screen repeat delay",
+        "wifi_max_attempts": "Wi-Fi Max connection attempts",
+        "upd_interval": "Sensors update interval",
+        "send_int": "Sensors sent interval",
+        "s_rot": "Screen rotation",
+        "s_brt": "Screen brightness",
+        "snd": "Sound indication",
+        "alert_temp": "Alert Temperature",
+        "alert_hum": "Alert Humidity",
+        "enabled": "Enabled",
+        "int": "Interval",
+        "min": "Min",
+        "max": "Max",
+    }
+
+    function _createSection(section, obj) {
+        if (section) {
+            const sectionTitle = document.createElement("h3");
+            sectionTitle.innerText = SettingsMap[section.split(".").reverse()[0]];
+            document.body.appendChild(sectionTitle);
+        }
+        for (const [key, value] of Object.entries(obj)) {
+            const path = [section, key].filter(s => s).join(".");
+            if (typeof value === "object") {
+                _createSection(path, value);
+            } else {
+                _createControl(path, value);
+            }
+        }
+    }
+
+    function _createControl(key, value) {
+        const title = document.createElement("p");
+        title.innerText = SettingsMap[key.split(".").reverse()[0]];
+
+        let control;
+        if (typeof value === "boolean") {
+            control = document.createElement("a");
+            control.classList.add("button");
+            control.setAttribute("data-key", key);
+            control.onclick = () => updateValue(control, (control.getAttribute("data-value") === "true") ? 0 : 1);
+        } else {
+            control = document.createElement("input");
+            control.classList.add("input");
+            control.value = Number.isInteger(value) ? value : value.toFixed(2);
+            control.onchange = () => updateValue(control, control.value);
+        }
+
+        control.setAttribute("data-value", value);
+        control.setAttribute("data-key", key);
+
+        document.body.appendChild(title);
+        document.body.appendChild(control);
+    }
+
+    async function updateValue(input, value) {
+        if (input.getAttribute("data-saving") === "true") return;
+
+        const path = input.getAttribute("data-key").split(".");
+        try {
+            input.setAttribute("data-saving", "true");
+            input.setAttribute("disabled", "true");
+
+            input.value = "...";
+            const body = new FormData();
+            for (let i = 0; i < path.length; i++) {
+                body.set(path[i], i === path.length - 1 ? value : "");
+            }
+
+            await fetch("./settings", {method: "POST", body});
+        } finally {
+            const newValue = await getConfig(path);
+            input.value = newValue;
+            input.setAttribute("data-value", newValue);
+            input.setAttribute("data-saving", "false");
+            input.removeAttribute("disabled");
+        }
+    }
+
+    async function getConfig(path = []) {
+        let config = await fetch("./settings").then(s => s.json());
+        for (const p of path) {
+            config = config[p];
+        }
+
+        return config;
+    }
+
+    async function resetSettings(control) {
+        try {
+            control.setAttribute("disabled", "true");
+            control.innerText = "...";
+            await fetch("./reset", {method: "POST"});
+        } finally {
+            location.reload();
+        }
+    }
+
+    const config = await getConfig();
+    _createSection("", config);
+
+    const reset = document.createElement("a");
+    reset.classList.add("button", "button-danger");
+    reset.innerText = "RESET";
+    reset.onclick = () => resetSettings(reset);
+    document.body.appendChild(reset);
+</script>
+</body>

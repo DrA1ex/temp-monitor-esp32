@@ -1,0 +1,1 @@
+{"t_cal":-0.400000006,"h_cal":0,"t_anim_delay":80,"t_loop_delay":3000,"wifi_max_attempts":600,"upd_interval":5000,"send_int":15000,"s_rot":1,"s_brt":3,"snd":true,"alert_temp":{"enabled":true,"int":300000,"min":28,"max":30},"alert_hum":{"enabled":false,"int":300000,"min":80,"max":100}}
