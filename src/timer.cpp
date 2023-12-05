@@ -1,13 +1,7 @@
-#include "debug.h"
-#include "timer.h"
-
-#ifdef DEBUG
-
 #include "Arduino.h"
 
-#endif
-
-extern unsigned long millis();
+#include "debug.h"
+#include "timer.h"
 
 Timer::~Timer() {
     if (_entries == nullptr) return;
