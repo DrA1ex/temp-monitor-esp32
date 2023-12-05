@@ -3,9 +3,10 @@
 #include <EEPROM.h>
 
 #include "debug.h"
+#include "timer.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 2
+#define SETTINGS_VERSION (int) 3
 
 class WebServer;
 
@@ -30,6 +31,8 @@ struct SettingsEntry {
     unsigned long sensor_update_interval = (unsigned long) 5 * 1000;
     unsigned long sensor_send_interval = (unsigned long) 15 * 1000;
 
+    unsigned long settings_save_interval = 60000;
+
     uint8_t screen_rotation = 1;
     uint8_t screen_brightness = 3;
 
@@ -47,8 +50,15 @@ class Settings {
     volatile static boolean _initialized;
 
     SettingsEntry _data;
+    Timer _timer;
+
+    long _save_timer_id = -1;
 
 public:
+    Settings(Timer timer);
+
+    inline Timer &timer() { return _timer; }
+
     void begin();
 
     inline const SettingsEntry &get() const { return _data; }
@@ -62,7 +72,7 @@ public:
     void reset();
 
 private:
-    void commit();
+    void _commit();
 };
 
-static Settings settings;
+static Settings settings(shared_timer);

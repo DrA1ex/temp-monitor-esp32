@@ -11,6 +11,7 @@ const char *TEXT_LOOP_DELAY = "t_loop_delay";
 const char *WIFI_MAX_CONNECT_ATTEMPTS = "wifi_max_attempts";
 const char *SENSOR_UPDATE_INTERVAL = "upd_interval";
 const char *SENSOR_SEND_INTERVAL = "send_int";
+const char *SETTINGS_SAVE_INTERVAL = "save_int";
 const char *SCREEN_ROTATION = "s_rot";
 const char *SCREEN_BRIGHTNESS = "s_brt";
 const char *SOUND_INDICATION = "snd";
@@ -23,6 +24,10 @@ const char *ALERT_MIN = "min";
 const char *ALERT_MAX = "max";
 
 volatile boolean Settings::_initialized = false;
+
+Settings::Settings(Timer timer) {
+    _timer = timer;
+}
 
 void Settings::begin() {
     if (!Settings::_initialized) {
@@ -56,7 +61,7 @@ void Settings::begin() {
 
 void Settings::update_settings(update_fn fn) {
     fn(_data);
-    commit();
+    _commit();
 }
 
 JsonObject write_alert(JsonObject obj, const AlertEntry &entry) {
@@ -78,6 +83,7 @@ String Settings::json() const {
     doc[WIFI_MAX_CONNECT_ATTEMPTS] = _data.wifi_max_connect_attempts;
     doc[SENSOR_UPDATE_INTERVAL] = _data.sensor_update_interval;
     doc[SENSOR_SEND_INTERVAL] = _data.sensor_send_interval;
+    doc[SETTINGS_SAVE_INTERVAL] = _data.settings_save_interval;
     doc[SCREEN_ROTATION] = _data.screen_rotation;
     doc[SCREEN_BRIGHTNESS] = _data.screen_brightness;
     doc[SOUND_INDICATION] = _data.sound_indication;
@@ -141,6 +147,7 @@ bool Settings::update_settings(WebServer &server) {
     ret = updateFieldFromRequest(server, WIFI_MAX_CONNECT_ATTEMPTS, _data.wifi_max_connect_attempts) || ret;
     ret = updateFieldFromRequest(server, SENSOR_UPDATE_INTERVAL, _data.sensor_update_interval) || ret;
     ret = updateFieldFromRequest(server, SENSOR_SEND_INTERVAL, _data.sensor_send_interval) || ret;
+    ret = updateFieldFromRequest(server, SETTINGS_SAVE_INTERVAL, _data.settings_save_interval) || ret;
     ret = updateFieldFromRequest(server, SCREEN_ROTATION, _data.screen_rotation) || ret;
     ret = updateFieldFromRequest(server, SCREEN_BRIGHTNESS, _data.screen_brightness) || ret;
     ret = updateFieldFromRequest(server, SOUND_INDICATION, _data.sound_indication) || ret;
@@ -157,7 +164,7 @@ bool Settings::update_settings(WebServer &server) {
         ret = readAlert(server, _data.alert_latency) || ret;
     }
 
-    if (ret) commit();
+    if (ret) _commit();
     return ret;
 }
 
@@ -166,12 +173,31 @@ void Settings::reset() {
 }
 
 
-void Settings::commit() {
-    EEPROM.put(Settings::_offset, _data);
+void _commit_impl(int offset, const SettingsEntry &data) {
+    EEPROM.put(offset, data);
     auto success = EEPROM.commit();
 
 #ifdef DEBUG
     if (success) Serial.println("EEPROM committed");
-    else Serial.println("EEPROM commit failed");
+    else Serial.println("EEPROM _commit failed");
 #endif
+}
+
+void Settings::_commit() {
+    if (_save_timer_id != -1) {
+#ifdef DEBUG
+        Serial.println("Clear existing Settings save timer");
+#endif
+        _timer.clear_timeout(_save_timer_id);
+    }
+
+#ifdef DEBUG
+    Serial.println("Plan Settings commit...");
+#endif
+
+    _save_timer_id = _timer.add_timeout([](void *param) {
+        Settings *self = (Settings *) param;
+        self->_save_timer_id = -1;
+        _commit_impl(Settings::_offset, self->_data);
+    }, _data.settings_save_interval, this);
 }

@@ -32,6 +32,7 @@ static WebServer server(80);
 
     for (;;) {
         server.handleClient();
-        yield();
+        settings.timer().handle_timers();
+        delay(1);
     }
 }
