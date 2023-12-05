@@ -7,4 +7,4 @@ May be used with [co2-temp-monitor](https://github.com/DrA1ex/co2-temp-monitor)
 
 Credentials configuration [/src/credentials.h](/src/credentials.h)
 
-Pin configuration [/src/pins.h](/src/pins.h)
+Pin configuration [/src/hardware.h](/src/hardware.h)
