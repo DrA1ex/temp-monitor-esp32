@@ -16,17 +16,20 @@ const unsigned int tcp_timeout = 1000;
 struct SensorData {
     volatile float humidity = NAN;
     volatile float temperature = NAN;
+    volatile float send_latency = 0;
+    volatile unsigned long last_send = 0;
 
     String display_string = "";
 };
 
 static unsigned long last_sensor_update = 0ul;
-static unsigned long last_sensor_sent = 0ul;
+static unsigned long last_sensor_send_try = 0ul;
 
 static SensorData sensor_data;
 static const Alert Alerts[] = {
         {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity},
         {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature},
+        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency},
 };
 
 static HTTPClient http;
@@ -44,11 +47,11 @@ void process_alerts() {
 
 void send_sensor_data() {
     const auto &config = settings.get();
-    if (last_sensor_sent == 0ul || (millis() - last_sensor_sent) > config.sensor_send_interval) {
+    if (last_sensor_send_try == 0ul || (millis() - last_sensor_send_try) > config.sensor_send_interval) {
 #ifdef DEBUG
         Serial.println("Sending sensor data...");
 #endif
-        last_sensor_sent = millis();
+        last_sensor_send_try = millis();
 
         String result;
         StaticJsonDocument<64> doc;
@@ -64,6 +67,12 @@ void send_sensor_data() {
         http.addHeader("API-Key", API_KEY);
 
         const auto httpResponseCode = http.POST(result);
+        if (httpResponseCode == 200) {
+            const auto now = millis();
+            sensor_data.send_latency = float(now - sensor_data.last_send) / 1000.0f;
+            sensor_data.last_send = now;
+        }
+
         http.end();
 
 #ifdef DEBUG
@@ -84,7 +93,7 @@ void update_sensor_data() {
         sensor_data.temperature = dht.readTemperature() + config.temperature_calibration;
 
         sensor_data.display_string = String(sensor_data.temperature, 1) + " C" + "   "
-                                     + String(sensor_data.humidity, 0) + " %  ";
+                                     + String(sensor_data.humidity, 0) + " %   ";
 
         last_sensor_update = millis();
 

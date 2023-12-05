@@ -5,7 +5,7 @@
 #include "debug.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 1
+#define SETTINGS_VERSION (int) 2
 
 class WebServer;
 
@@ -37,6 +37,7 @@ struct SettingsEntry {
 
     AlertEntry alert_temperature = {true, (unsigned long) 5 * 60 * 1000, 28, 30};
     AlertEntry alert_humidity = {false, (unsigned long) 5 * 60 * 1000, 80, 100};
+    AlertEntry alert_latency = {true, (unsigned long) 5 * 60 * 1000, 0, 300};
 };
 
 typedef void (*update_fn)(SettingsEntry &data);

@@ -7,6 +7,7 @@
 
 #define ALERT_HUMIDITY 0u
 #define ALERT_TEMPERATURE 1u
+#define ALERT_SENDING 2u
 
 struct Alert {
     const int key;
@@ -14,7 +15,7 @@ struct Alert {
     const volatile float &value;
 };
 
-static unsigned long alert_time[] = {0ul, 0ul};
+static unsigned long alert_time[] = {0ul, 0ul, 0ul};
 
 void alert(const unsigned int key, const unsigned int alert_interval, float value, float min, float max) {
     const auto last_alert = alert_time[key];

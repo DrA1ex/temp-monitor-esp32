@@ -16,6 +16,7 @@ const char *SCREEN_BRIGHTNESS = "s_brt";
 const char *SOUND_INDICATION = "snd";
 const char *ALERT_TEMPERATURE = "alert_temp";
 const char *ALERT_HUMIDITY = "alert_hum";
+const char *ALERT_SEND_LAT = "alert_lat";
 const char *ALERT_ENABLED = "enabled";
 const char *ALERT_INTERVAL = "int";
 const char *ALERT_MIN = "min";
@@ -83,6 +84,7 @@ String Settings::json() {
 
     write_alert(doc.createNestedObject(ALERT_TEMPERATURE), _data.alert_temperature);
     write_alert(doc.createNestedObject(ALERT_HUMIDITY), _data.alert_humidity);
+    write_alert(doc.createNestedObject(ALERT_SEND_LAT), _data.alert_latency);
 
     String result;
     serializeJson(doc, result);
@@ -149,6 +151,10 @@ bool Settings::update_settings(WebServer &server) {
 
     if (server.hasArg(ALERT_HUMIDITY)) {
         ret = readAlert(server, _data.alert_humidity) || ret;
+    }
+
+    if (server.hasArg(ALERT_SEND_LAT)) {
+        ret = readAlert(server, _data.alert_latency) || ret;
     }
 
     if (ret) commit();
