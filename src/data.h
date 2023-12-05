@@ -38,9 +38,7 @@ static WiFiClientSecure client;
 [[noreturn]] void data_loop(void *);
 
 void process_alerts() {
-    const int count = sizeof(Alerts) / sizeof Alerts[0];
-    for (int i = 0; i < count; ++i) {
-        const auto &alert_value = Alerts[0];
+    for (auto alert_value: Alerts) {
         alert(alert_value.key, alert_value.value, alert_value.entry_prop);
     }
 }
