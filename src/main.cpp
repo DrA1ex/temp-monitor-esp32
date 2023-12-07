@@ -29,6 +29,7 @@ void setup() {
     matrix.setRotation(config.screen_rotation);
     matrix.setIntensity(config.screen_brightness);
 
+    http.setReuse(true);
     client.setCACert(SSL_CERT);
 
     wifi_connect();

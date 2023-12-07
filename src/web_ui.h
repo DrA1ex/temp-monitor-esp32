@@ -45,7 +45,6 @@ static WebServer server(80);
 
     for (;;) {
         server.handleClient();
-        settings.timer().handle_timers();
-        delay(1);
+        delay(10);
     }
 }

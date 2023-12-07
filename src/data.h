@@ -16,7 +16,8 @@ const unsigned int tcp_timeout = 1000;
 struct SensorData {
     volatile float humidity = NAN;
     volatile float temperature = NAN;
-    volatile float send_latency = 0;
+    volatile float send_latency = NAN;
+    volatile unsigned long last_update = 0;
     volatile unsigned long last_send = 0;
 
     String display_string = "";
@@ -25,7 +26,7 @@ struct SensorData {
         StaticJsonDocument<256> doc;
         doc["temp"] = temperature;
         doc["hum"] = humidity;
-        doc["lat"] = float(millis() - last_send) / 1000;
+        doc["lat"] = send_latency;
 
         auto system = doc.createNestedObject("system");
         system["uptime"] = esp_timer_get_time() / 1000000ULL;
@@ -42,10 +43,6 @@ enum State : uint8_t {
     PENDING_ALERT,
     DISPLAY_ALERT,
 };
-
-
-static unsigned long last_sensor_update = 0ul;
-static unsigned long last_sensor_send_try = 0ul;
 
 volatile static State current_state = DISPLAY_SENSOR;
 
@@ -75,18 +72,16 @@ void process_alerts() {
                                    + String(config.unit);
 
             return;
-        };
+        }
     }
 }
 
 void send_sensor_data() {
     const auto &config = settings.get();
-    if (last_sensor_send_try == 0ul || (millis() - last_sensor_send_try) > config.sensor_send_interval) {
+    if (sensor_data.last_send == 0ul || (millis() - sensor_data.last_send) > config.sensor_send_interval) {
 #ifdef DEBUG
         Serial.println("Sending sensor data...");
 #endif
-        last_sensor_send_try = millis();
-
         String result;
         StaticJsonDocument<64> doc;
         if (!isnan(sensor_data.temperature)) doc["Tamb"] = sensor_data.temperature;
@@ -103,7 +98,9 @@ void send_sensor_data() {
         const auto httpResponseCode = http.POST(result);
         if (httpResponseCode == 200) {
             const auto now = millis();
-            sensor_data.send_latency = float(now - sensor_data.last_send) / 1000.0f;
+            sensor_data.send_latency = (float) (now - sensor_data.last_send) - (float) config.sensor_send_interval;
+            if (sensor_data.send_latency < 0ul) sensor_data.send_latency = NAN;
+
             sensor_data.last_send = now;
         }
 
@@ -122,14 +119,14 @@ void send_sensor_data() {
 
 void update_sensor_data() {
     const auto &config = settings.get();
-    if (last_sensor_update == 0ul || (millis() - last_sensor_update) > config.sensor_update_interval) {
+    if (sensor_data.last_update == 0ul || (millis() - sensor_data.last_update) > config.sensor_update_interval) {
         sensor_data.humidity = dht.readHumidity() + config.humidity_calibration;
         sensor_data.temperature = dht.readTemperature() + config.temperature_calibration;
 
         sensor_data.display_string = String(sensor_data.temperature, 1) + " C" + "  "
                                      + String(sensor_data.humidity, 0) + " %";
 
-        last_sensor_update = millis();
+        sensor_data.last_update = millis();
 
 #ifdef DEBUG
         Serial.print("Sensor Data: ");
@@ -156,8 +153,9 @@ void update_sensor_data() {
         }
 
         send_sensor_data();
+        settings.timer().handle_timers();
 
-        delay(1000);
+        delay(100);
     }
 }
 
