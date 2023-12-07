@@ -230,8 +230,10 @@
             }
         }
 
-        function formatTimeSpan(sec, fractionDigits) {
+        function formatTimeSpan(sec, fractionDigits = 0) {
             const units = [
+                {unit: "yr", exp: 365 * 60 * 60 * 24},
+                {unit: "mth", exp: 30 * 60 * 60 * 24},
                 {unit: "d", exp: 60 * 60 * 24},
                 {unit: "h", exp: 60 * 60, threshold: 3},
                 {unit: "m", exp: 60, threshold: 5},
