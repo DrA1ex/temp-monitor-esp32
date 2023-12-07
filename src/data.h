@@ -22,10 +22,14 @@ struct SensorData {
     String display_string = "";
 
     String json() const {
-        StaticJsonDocument<128> doc;
+        StaticJsonDocument<256> doc;
         doc["temp"] = temperature;
         doc["hum"] = humidity;
         doc["lat"] = float(millis() - last_send) / 1000;
+
+        auto system = doc.createNestedObject("system");
+        system["uptime"] = esp_timer_get_time() / 1000000ULL;
+        system["wifi"] = WiFi.RSSI();
 
         String result;
         serializeJson(doc, result);

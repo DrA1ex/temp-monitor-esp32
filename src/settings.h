@@ -71,6 +71,10 @@ public:
 
     void reset();
 
+    inline bool is_pending_commit() { return _save_timer_id != -1; }
+
+    void force_save();
+
 private:
     void _commit();
 };

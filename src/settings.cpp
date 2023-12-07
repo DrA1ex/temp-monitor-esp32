@@ -201,3 +201,14 @@ void Settings::_commit() {
         _commit_impl(Settings::_offset, self->_data);
     }, _data.settings_save_interval, this);
 }
+
+void Settings::force_save() {
+    if (_save_timer_id != -1) {
+#ifdef DEBUG
+        Serial.println("Clear existing Settings save timer");
+#endif
+        _timer.clear_timeout(_save_timer_id);
+    }
+
+    _commit_impl(Settings::_offset, _data);
+}

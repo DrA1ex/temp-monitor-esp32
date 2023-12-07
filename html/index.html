@@ -77,13 +77,20 @@
         }
 
         .button-danger {
-            margin-top: 8rem;
             background-color: #5e3434
+        }
+
+        #actions {
+            margin-top: 8rem;
         }
 
         p {
             font-size: 1rem;
             margin-bottom: 0.75rem
+        }
+
+        .status {
+            font-style: italic;
         }
 
         @keyframes saving {
@@ -123,24 +130,24 @@
             "max": "Max value",
         }
 
-        function _createSection(section, obj) {
+        function _createSection(parent, section, obj) {
             if (section) {
                 const sectionTitle = document.createElement("h3");
                 sectionTitle.innerText = SettingsMap[section.split(".").reverse()[0]];
-                document.body.appendChild(sectionTitle);
+                parent.appendChild(sectionTitle);
             }
 
             for (const [key, value] of Object.entries(obj)) {
                 const path = [section, key].filter(s => s).join(".");
                 if (typeof value === "object") {
-                    _createSection(path, value);
+                    _createSection(parent, path, value);
                 } else {
-                    _createControl(path, value);
+                    _createControl(parent, path, value);
                 }
             }
         }
 
-        function _createControl(key, value) {
+        function _createControl(parent, key, value) {
             const title = document.createElement("p");
             title.innerText = SettingsMap[key.split(".").reverse()[0]];
 
@@ -160,8 +167,8 @@
             control.setAttribute("data-value", value);
             control.setAttribute("data-key", key);
 
-            document.body.appendChild(title);
-            document.body.appendChild(control);
+            parent.appendChild(title);
+            parent.appendChild(control);
         }
 
         async function updateValue(input, value) {
@@ -207,6 +214,40 @@
             }
         }
 
+        async function restart(control) {
+            try {
+                control.setAttribute("disabled", "true");
+                control.innerText = "...";
+                await fetch("./restart", {method: "POST"});
+            } finally {
+                setTimeout(() => location.reload(), 1000);
+            }
+        }
+
+        function formatTimeSpan(sec, fractionDigits) {
+            const units = [
+                {unit: "d", exp: 60 * 60 * 24},
+                {unit: "h", exp: 60 * 60, threshold: 3},
+                {unit: "m", exp: 60, threshold: 5},
+                {unit: "s", exp: 1},
+            ]
+
+            return formatUnitCustom(sec, "", units, fractionDigits);
+        }
+
+        function formatUnitCustom(value, unit, unitsConfig, fractionDigits) {
+            let sizeUnit = "";
+            for (let i = 0; i < unitsConfig.length; i++) {
+                if (value >= unitsConfig[i].exp * (unitsConfig[i].threshold ?? 1)) {
+                    value /= unitsConfig[i].exp;
+                    sizeUnit = unitsConfig[i].unit;
+                    break;
+                }
+            }
+
+            return `${value.toFixed(fractionDigits)} ${sizeUnit}${unit}`;
+        }
+
         const Sensors = {
             temp: {el: document.getElementById("temp"), fraction: 2},
             hum: {el: document.getElementById("hum"), fraction: 0},
@@ -216,7 +257,7 @@
         async function _updateSensors() {
             let data = {};
             try {
-                data = await fetch("/sensor").then(f => f.json());
+                data = await fetch("status").then(f => f.json());
             } catch (e) {
                 console.log("Unable to load sensor data", e);
             }
@@ -225,31 +266,45 @@
                 el.innerText = data[key]?.toFixed(fraction) ?? "???";
             }
 
+            document.getElementById("uptime").innerText = formatTimeSpan(data.system.uptime);
+            document.getElementById("wifi").innerText = data.system.wifi;
+
             setTimeout(_updateSensors, 3000);
         }
 
         _updateSensors();
 
         const config = await getConfig();
+        _createSection(document.getElementById("settings"), "", config);
+
+        window.restart = restart;
+        window.resetSettings = resetSettings;
 
         document.getElementById("loader").remove();
-        _createSection("", config);
-
-        const reset = document.createElement("a");
-        reset.classList.add("button", "button-danger");
-        reset.innerText = "RESET";
-        reset.onclick = () => resetSettings(reset);
-        document.body.appendChild(reset);
+        document.getElementById("status").style.visibility = "visible";
+        document.getElementById("settings").style.visibility = "visible";
+        document.getElementById("actions").style.visibility = "visible";
+        document.getElementById("extra").style.visibility = "visible";
     </script>
 </head>
 <body>
 <div class="bg"></div>
 <h1>Monitor Settings</h1>
-<p>
-    Temperature: <span id="temp">...</span> Cº
-    Humidity: <span id=hum>...</span>%
+<p id="loader">Loading...</p>
+
+<p id="status" class="status" style="visibility: collapse">
+    Temperature: <span id="temp">...</span> Cº,
+    Humidity: <span id=hum>...</span>%,
     Sent latency: <span id="lat">...</span> sec
 </p>
+<div id="settings" style="visibility: collapse"></div>
+<div id="actions" style="visibility: collapse">
+    <a class="button button-danger" onclick="restart(this)">RESTART</a>
+    <a class="button button-danger" onclick="resetSettings(this)">RESET</a>
+</div>
 
-<p id="loader">Loading...</p>
+<p id="extra" class="status" style="visibility: collapse">
+    Uptime: <span id="uptime">...</span>,
+    WiFi: <span id="wifi">...</span> dB
+</p>
 </body>

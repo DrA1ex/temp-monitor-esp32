@@ -13,7 +13,7 @@ static WebServer server(80);
     server.on("/settings", HTTPMethod::HTTP_GET, [] {
         server.send(200, "application/json", settings.json());
     });
-    server.on("/sensor", HTTPMethod::HTTP_GET, [] {
+    server.on("/status", HTTPMethod::HTTP_GET, [] {
         server.send(200, "application/json", sensor_data.json());
     });
     server.on("/settings", HTTPMethod::HTTP_POST, [] {
@@ -26,6 +26,19 @@ static WebServer server(80);
     server.on("/reset", HTTPMethod::HTTP_POST, [] {
         settings.reset();
         server.send(200, "plain/text", "OK");
+    });
+
+    server.on("/restart", HTTPMethod::HTTP_POST, [] {
+        if (settings.is_pending_commit()) {
+            settings.force_save();
+        }
+
+#ifdef DEBUG
+        Serial.println("Restart by use request");
+#endif
+
+        server.send(200);
+        ESP.restart();
     });
 
     server.begin();
