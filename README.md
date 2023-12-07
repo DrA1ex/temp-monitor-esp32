@@ -21,6 +21,8 @@ This project is designed to be developed using [PlatformIO](https://platformio.o
 
 2. **Credentials**
    - Configure your specific credentials in [/src/credentials.h](/src/credentials.h).
+      - `API_URL`: Should contain the URL to the receiver's POST method, for example: `https://example.com/receiver/sensor`.
+      - `API_KEY`: This key will be sent in the `API-Key` header and can be used by the receiver to verify the sender.
 
 3. **Hardware Configuration**
    - Adjust pin configurations in [/src/hardware.h](/src/hardware.h) to match your hardware setup.
