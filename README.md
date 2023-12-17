@@ -4,11 +4,16 @@ This project provides a solution for monitoring temperature and humidity using a
 
 ## Schematic
 
-Connect the components based on the pin configurations defined in [/src/hardware.h](/src/hardware.h). If you prefer using custom pins, modify the file accordingly.
+To easily use this project, follow these steps to connect the components:
 
-Note: Depending on your specific setup, additional components like diodes, capacitors, transistors and resistors might be necessary, but I don't use any.
+1. Open the [/src/hardware.h](/src/hardware.h) file and configure the pin connections based on the provided pin configurations.
+   If you prefer using custom pins, make the necessary modifications in this file.
 
-![Temperature Humidity Monitor](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/252d2d2c-b5dc-4729-8d1b-844ee0317eaf)
+2. In this project, I have substituted the MQ-135 sensor with the MHZ-19B sensor. Additionally, a DC-DC converter is used to power both the controller and the fan from a single DC-Adapter.
+
+**Note:** Depending on your specific setup, you might need additional components such as diodes, capacitors, transistors, and resistors. However, for this particular project, I haven't use any of these additional components.
+
+![Temperature Humidity Monitor](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/c39c1a66-210f-49ed-9787-668ba9ce9be8)
 
 ## Build
 
