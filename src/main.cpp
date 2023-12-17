@@ -32,9 +32,6 @@ void setup() {
     http.setReuse(true);
     client.setCACert(SSL_CERT);
 
-    wifi_connect();
-    play_sound(SOUND_WIFI_ON);
-
     dht.begin();
 
     co2Uart.begin(9600);
@@ -48,6 +45,9 @@ void setup() {
     ledcSetup(PWM_CHANNEL_FAN, config.fan_pwm_frequency, 8);
     ledcAttachPin(PIN_FAN_PWM, PWM_CHANNEL_FAN);
 #endif
+
+    wifi_connect();
+    play_sound(SOUND_WIFI_ON);
 
     xTaskCreatePinnedToCore(ui_loop, "UI", 10240, nullptr, 1, &UiTask, 0);
     xTaskCreatePinnedToCore(data_loop, "Data", 10240, nullptr, 1, &DataUpdateTask, 1);

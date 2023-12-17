@@ -98,13 +98,6 @@
             background-color: #5e3434
         }
 
-        #status {
-            font-size: 0.6rem;
-            font-weight: 200;
-            margin: -0.5rem auto -1rem auto;
-            width: 100%;
-        }
-
         #actions {
             margin-top: 8rem;
         }
@@ -116,8 +109,27 @@
             margin-bottom: 0.75rem;
         }
 
+        #status {
+            top: 0;
+            background: white;
+        }
+
+        #extra {
+            bottom: 0;
+            background: #ece9e9;
+        }
+
         .status {
+            position: fixed;
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding: 0.75rem 0;
+
+            text-align: center;
             font-style: italic;
+            font-size: 0.6rem;
+            font-weight: 200;
         }
 
         @keyframes saving {
@@ -163,11 +175,11 @@
             "s_brt": "Brightness, (0-15)",
             "snd": "Sound indication",
             "f_freq": "PWM frequency",
-            "f_mode": "Control mode",
-            "f_sensor": "Assigned sensor",
-            "f_min_d": "Min duty value (0-1)",
-            "f_min_v": "Min sensor value",
-            "f_max_v": "Max sensor value",
+            "f_mode": "Mode (0 - PWM, WINDOW, ON, OFF - 3)",
+            "f_sensor": "Sensor (0 - TEMP, HUM, CO2 - 2)",
+            "f_min_d": "Min Duty value (0-1)",
+            "f_min_v": "Min Sensor value",
+            "f_max_v": "Max Sensor value",
             "alert_temp": "Alert Temperature, Cº",
             "alert_co2": "Alert CO2, ppm",
             "alert_hum": "Alert Humidity, %",
@@ -382,13 +394,16 @@
     Fan: <span id=fan>...</span>%,
     Latency: <span id="lat">...</span> ms
 </p>
-<h1>Settings</h1>
-<p id="loader">Loading...</p>
-<div id="settings" style="visibility: collapse"></div>
-<div id="actions" style="visibility: collapse">
-    <a class="button button-danger" onclick="calibrateCo2(this)">CALIBRATE CO2</a>
-    <a class="button button-danger" onclick="restart(this)">RESTART</a>
-    <a class="button button-danger" onclick="resetSettings(this)">RESET</a>
+<div class="content">
+    <h1>Settings</h1>
+    <h3 id="loader">Loading...</h3>
+
+    <div id="settings" style="visibility: collapse"></div>
+    <div id="actions" style="visibility: collapse">
+        <a class="button button-danger" onclick="calibrateCo2(this)">CALIBRATE CO2</a>
+        <a class="button button-danger" onclick="restart(this)">RESTART</a>
+        <a class="button button-danger" onclick="resetSettings(this)">RESET</a>
+    </div>
 </div>
 
 <p id="extra" class="status" style="visibility: collapse">

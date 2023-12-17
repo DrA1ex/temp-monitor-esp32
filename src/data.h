@@ -26,6 +26,10 @@ struct SensorData {
 
     String display_string = "";
 
+    bool ready() {
+        return !isnan(humidity) || !isnan(temperature) || !isnan(co2);
+    }
+
     String json() const {
         StaticJsonDocument<256> doc;
         doc["temp"] = temperature;
@@ -44,6 +48,11 @@ struct SensorData {
     }
 
     void update_string() {
+        if (!ready()) {
+            display_string = "Warming up...";
+            return;
+        }
+
         String co2_formatted;
         if (!isnan(co2) && co2 >= 1000) {
             float k = co2 / 1000.0f;
@@ -62,12 +71,13 @@ struct SensorData {
 };
 
 enum State : uint8_t {
+    WARM_UP,
     DISPLAY_SENSOR,
     PENDING_ALERT,
     DISPLAY_ALERT,
 };
 
-volatile static State current_state = DISPLAY_SENSOR;
+volatile static State current_state = WARM_UP;
 
 static SensorData sensor_data;
 static String alert_display_string = "";
