@@ -20,6 +20,7 @@ const char *FAN_PWM_FREQUENCY = "f_freq";
 const char *FAN_MODE = "f_mode";
 const char *FAN_SENSOR = "f_sensor";
 const char *FAN_MIN_DUTY = "f_min_d";
+const char *FAN_MAX_DUTY = "f_max_d";
 const char *FAN_MIN_SENSOR_VALUE = "f_min_v";
 const char *FAN_MAX_SENSOR_VALUE = "f_max_v";
 const char *ALERT_TEMPERATURE = "alert_temp";
@@ -102,6 +103,7 @@ String Settings::json() const {
     doc[FAN_MAX_SENSOR_VALUE] = _data.fan_max_sensor_value;
     doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
     doc[FAN_MIN_DUTY] = _data.fan_min_duty;
+    doc[FAN_MAX_DUTY] = _data.fan_max_duty;
 
     write_alert(doc.createNestedObject(ALERT_TEMPERATURE), _data.alert_temperature);
     write_alert(doc.createNestedObject(ALERT_CO2), _data.alert_co2);
@@ -172,6 +174,7 @@ bool Settings::update_settings(WebServer &server) {
     ret = updateFieldFromRequest(server, FAN_MODE, _data.fan_mode) || ret;
     ret = updateFieldFromRequest(server, FAN_SENSOR, _data.fan_sensor) || ret;
     ret = updateFieldFromRequest(server, FAN_MIN_DUTY, _data.fan_min_duty) || ret;
+    ret = updateFieldFromRequest(server, FAN_MAX_DUTY, _data.fan_max_duty) || ret;
     ret = updateFieldFromRequest(server, FAN_MIN_SENSOR_VALUE, _data.fan_min_sensor_value) || ret;
     ret = updateFieldFromRequest(server, FAN_MAX_SENSOR_VALUE, _data.fan_max_sensor_value) || ret;
 

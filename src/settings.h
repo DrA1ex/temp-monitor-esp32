@@ -6,7 +6,7 @@
 #include "timer.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 5
+#define SETTINGS_VERSION (int) 6
 
 class WebServer;
 
@@ -44,6 +44,7 @@ struct SettingsEntry {
     SensorType fan_sensor = SensorType::CO2;
 
     float fan_min_duty = 0.1;
+    float fan_max_duty = 1.0;
     float fan_min_sensor_value = 600;
     float fan_max_sensor_value = 2000;
 

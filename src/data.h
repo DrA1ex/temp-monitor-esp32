@@ -213,6 +213,7 @@ void update_fan_speed() {
 
 
     if (isnan(fan_duty) || fan_duty < config.fan_min_duty) fan_duty = 0.0f;
+    else if (fan_duty > config.fan_max_duty) fan_duty = config.fan_max_duty;
 
     ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (255 * fan_duty));;
     sensor_data.fan_speed = fan_duty;

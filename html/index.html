@@ -151,7 +151,7 @@
         const SettingsGroup = {
             "Sensors": ["t_cal", "h_cal", "co2_cal", "upd_interval", "send_int"],
             "UI": ["t_anim_delay", "t_loop_delay", "s_rot", "s_brt", "snd"],
-            "Fan Control": ["f_freq", "f_mode", "f_sensor", "f_min_d", "f_min_v", "f_max_v"],
+            "Fan Control": ["f_freq", "f_mode", "f_sensor", "f_min_d", "f_max_d", "f_min_v", "f_max_v"],
             "Alerts": ["alert_temp", "alert_co2", "alert_hum", "alert_lat"],
             "Other": [],
         };
@@ -178,6 +178,7 @@
             "f_mode": "Mode (0 - PWM, WINDOW, ON, OFF - 3)",
             "f_sensor": "Sensor (0 - TEMP, HUM, CO2 - 2)",
             "f_min_d": "Min Duty value (0-1)",
+            "f_max_d": "Max Duty value (0-1)",
             "f_min_v": "Min Sensor value",
             "f_max_v": "Max Sensor value",
             "alert_temp": "Alert Temperature, Cº",
