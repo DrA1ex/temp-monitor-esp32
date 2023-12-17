@@ -96,12 +96,12 @@ String Settings::json() const {
     doc[SCREEN_ROTATION] = _data.screen_rotation;
     doc[SCREEN_BRIGHTNESS] = _data.screen_brightness;
     doc[SOUND_INDICATION] = _data.sound_indication;
-    doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
-    doc[FAN_MODE] = _data.fan_mode;
     doc[FAN_SENSOR] = _data.fan_sensor;
-    doc[FAN_MIN_DUTY] = _data.fan_min_duty;
+    doc[FAN_MODE] = _data.fan_mode;
     doc[FAN_MIN_SENSOR_VALUE] = _data.fan_min_sensor_value;
     doc[FAN_MAX_SENSOR_VALUE] = _data.fan_max_sensor_value;
+    doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
+    doc[FAN_MIN_DUTY] = _data.fan_min_duty;
 
     write_alert(doc.createNestedObject(ALERT_TEMPERATURE), _data.alert_temperature);
     write_alert(doc.createNestedObject(ALERT_CO2), _data.alert_co2);
