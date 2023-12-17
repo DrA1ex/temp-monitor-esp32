@@ -37,6 +37,18 @@ void setup() {
 
     dht.begin();
 
+    co2Uart.begin(9600);
+    Mhz19.begin(co2Uart);
+
+    Mhz19.setRange(5000);
+    Mhz19.setFilter(false);
+    Mhz19.autoCalibration(false);
+
+#ifdef PIN_FAN_PWM
+    ledcSetup(PWM_CHANNEL_FAN, config.fan_pwm_frequency, 8);
+    ledcAttachPin(PIN_FAN_PWM, PWM_CHANNEL_FAN);
+#endif
+
     xTaskCreatePinnedToCore(ui_loop, "UI", 10240, nullptr, 1, &UiTask, 0);
     xTaskCreatePinnedToCore(data_loop, "Data", 10240, nullptr, 1, &DataUpdateTask, 1);
     xTaskCreatePinnedToCore(web_loop, "Web", 10240, nullptr, 1, &WebTask, 1);

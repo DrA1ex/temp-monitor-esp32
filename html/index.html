@@ -25,12 +25,26 @@
             z-index: -1;
         }
 
+        h1, h2, h3 {
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
         h1 {
-            margin: 2rem auto 1rem
+            font-size: 3rem;
+            color: #34495e;
+            margin: 2rem auto 1rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #145d8d;
+            margin: 2rem auto 1rem auto;
         }
 
         h3 {
-            margin-bottom: 2rem
+            font-size: 1.5rem;
+            margin: 0 auto 1.5rem auto;
         }
 
         .button, .input {
@@ -84,13 +98,22 @@
             background-color: #5e3434
         }
 
+        #status {
+            font-size: 0.6rem;
+            font-weight: 200;
+            margin: -0.5rem auto -1rem auto;
+            width: 100%;
+        }
+
         #actions {
             margin-top: 8rem;
         }
 
+
         p {
             font-size: 1rem;
-            margin-bottom: 0.75rem
+            font-weight: 300;
+            margin-bottom: 0.75rem;
         }
 
         .status {
@@ -113,19 +136,40 @@
     </style>
 
     <script type=module defer>
+        const SettingsGroup = {
+            "Sensors": ["t_cal", "h_cal", "co2_cal", "upd_interval", "send_int"],
+            "UI": ["t_anim_delay", "t_loop_delay", "s_rot", "s_brt", "snd"],
+            "Fan Control": ["f_freq", "f_mode", "f_sensor", "f_min_d", "f_min_v", "f_max_v"],
+            "Alerts": ["alert_temp", "alert_co2", "alert_hum", "alert_lat"],
+            "Other": [],
+        };
+
+        const SettingsKeyToGroup = Object.entries(SettingsGroup).reduce((acc, [name, keys]) => {
+            for (const key of keys) acc[key] = name;
+            return acc;
+        }, {});
+
         const SettingsMap = {
             "t_cal": "Temperature calibration, Cº",
             "h_cal": "Humidity calibration, %",
-            "t_anim_delay": "Screen animation delay, ms",
-            "t_loop_delay": "Screen repeat delay, ms",
+            "co2_cal": "CO2 calibration, ppm",
+            "t_anim_delay": "Animation delay, ms",
+            "t_loop_delay": "Repeat delay, ms",
             "wifi_max_attempts": "Wi-Fi Max connection attempts",
-            "upd_interval": "Sensors update interval, ms",
-            "send_int": "Sensors send interval, ms",
+            "upd_interval": "Update interval, ms",
+            "send_int": "Send interval, ms",
             "save_int": "Settings save interval, ms",
-            "s_rot": "Screen rotation (0-3)",
-            "s_brt": "Screen brightness, (0-15)",
+            "s_rot": "Rotation (0-3)",
+            "s_brt": "Brightness, (0-15)",
             "snd": "Sound indication",
+            "f_freq": "PWM frequency",
+            "f_mode": "Control mode",
+            "f_sensor": "Assigned sensor",
+            "f_min_d": "Min duty value (0-1)",
+            "f_min_v": "Min sensor value",
+            "f_max_v": "Max sensor value",
             "alert_temp": "Alert Temperature, Cº",
+            "alert_co2": "Alert CO2, ppm",
             "alert_hum": "Alert Humidity, %",
             "alert_lat": "Alert Send Latency, ms",
             "enabled": "Enabled",
@@ -134,7 +178,13 @@
             "max": "Max value",
         }
 
-        function _createSection(parent, section, obj) {
+        function _createSection(parent, section, obj, title = null) {
+            if (title) {
+                const groupTitle = document.createElement("h2");
+                groupTitle.innerText = title;
+                parent.appendChild(groupTitle);
+            }
+
             if (section) {
                 const sectionTitle = document.createElement("h3");
                 sectionTitle.innerText = SettingsMap[section.split(".").reverse()[0]];
@@ -208,12 +258,21 @@
             return config;
         }
 
-        async function resetSettings(control) {
+        async function actionRequest(control, url, method = "POST") {
             try {
                 control.setAttribute("disabled", "true");
                 control.setAttribute("data-saving", "true");
                 control.innerText = "...";
-                await fetch("./reset", {method: "POST"});
+                await fetch(url, {method});
+            } finally {
+                control.removeAttribute("disabled");
+                control.setAttribute("data-saving", "false");
+            }
+        }
+
+        async function resetSettings(control) {
+            try {
+                await actionRequest(control, "/reset");
             } finally {
                 location.reload();
             }
@@ -221,12 +280,15 @@
 
         async function restart(control) {
             try {
-                control.setAttribute("disabled", "true");
-                control.setAttribute("data-saving", "true");
-                control.innerText = "...";
-                await fetch("./restart", {method: "POST"});
+                await actionRequest(control, "/restart");
             } finally {
                 setTimeout(() => location.reload(), 1000);
+            }
+        }
+
+        async function calibrateCo2(control) {
+            if (confirm("Do you want to calibrate CO2 zero level?")) {
+                await actionRequest(control, '/co2/calibrate');
             }
         }
 
@@ -259,6 +321,8 @@
         const Sensors = {
             temp: {el: document.getElementById("temp"), fraction: 2},
             hum: {el: document.getElementById("hum"), fraction: 0},
+            co2: {el: document.getElementById("co2"), fraction: 0},
+            fan: {el: document.getElementById("fan"), fraction: 0},
             lat: {el: document.getElementById("lat"), fraction: 0}
         }
 
@@ -283,10 +347,24 @@
         _updateSensors();
 
         const config = await getConfig();
-        _createSection(document.getElementById("settings"), "", config);
+        const groups = Object.entries(config)
+            .map(([key, value]) => ({
+                key, value,
+                group: SettingsKeyToGroup[key] ?? "Other",
+            }))
+            .reduce((acc, entry) => {
+                if (!acc[entry.group]) acc[entry.group] = {};
+                acc[entry.group][entry.key] = entry.value;
+                return acc;
+            }, {});
+
+        for (const title of Object.keys(SettingsGroup)) {
+            _createSection(document.getElementById("settings"), "", groups[title], title);
+        }
 
         window.restart = restart;
         window.resetSettings = resetSettings;
+        window.calibrateCo2 = calibrateCo2;
 
         document.getElementById("loader").remove();
         document.getElementById("status").style.visibility = "visible";
@@ -297,16 +375,18 @@
 </head>
 <body>
 <div class="bg"></div>
-<h1>Monitor Settings</h1>
-<p id="loader">Loading...</p>
-
 <p id="status" class="status" style="visibility: collapse">
-    Temperature: <span id="temp">...</span> Cº,
+    Temp: <span id="temp">...</span> Cº,
     Humidity: <span id=hum>...</span>%,
-    Send latency: <span id="lat">...</span> ms
+    CO2: <span id=co2>...</span>ppm,
+    Fan: <span id=fan>...</span>%,
+    Latency: <span id="lat">...</span> ms
 </p>
+<h1>Settings</h1>
+<p id="loader">Loading...</p>
 <div id="settings" style="visibility: collapse"></div>
 <div id="actions" style="visibility: collapse">
+    <a class="button button-danger" onclick="calibrateCo2(this)">CALIBRATE CO2</a>
     <a class="button button-danger" onclick="restart(this)">RESTART</a>
     <a class="button button-danger" onclick="resetSettings(this)">RESET</a>
 </div>

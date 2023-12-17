@@ -6,7 +6,7 @@
 #include "timer.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 3
+#define SETTINGS_VERSION (int) 5
 
 class WebServer;
 
@@ -17,12 +17,35 @@ struct AlertEntry {
     float max;
 };
 
+enum FanMode : uint8_t {
+    PWM = 0,
+    WINDOW = 1,
+    ON = 2,
+    OFF = 3,
+};
+
+enum SensorType : uint8_t {
+    TEMPERATURE = 0,
+    HUMIDITY = 1,
+    CO2 = 2
+};
+
 struct SettingsEntry {
     int header = SETTINGS_HEADER;
     int version = SETTINGS_VERSION;
 
     float temperature_calibration = -0.4f;
     float humidity_calibration = 0.0f;
+    float co2_calibration = 0.0f;
+
+    unsigned long fan_pwm_frequency = 26000;
+
+    FanMode fan_mode = FanMode::PWM;
+    SensorType fan_sensor = SensorType::CO2;
+
+    float fan_min_duty = 0.1;
+    float fan_min_sensor_value = 600;
+    float fan_max_sensor_value = 2000;
 
     unsigned int text_animation_delay = 80;
     unsigned int text_loop_delay = 3000;
@@ -38,7 +61,8 @@ struct SettingsEntry {
 
     boolean sound_indication = true;
 
-    AlertEntry alert_temperature = {true, (unsigned long) 5 * 60 * 1000, 28, 30};
+    AlertEntry alert_temperature = {true, (unsigned long) 5 * 60 * 1000, 22, 24};
+    AlertEntry alert_co2 = {true, (unsigned long) 5 * 60 * 1000, 400, 1500};
     AlertEntry alert_humidity = {false, (unsigned long) 5 * 60 * 1000, 80, 100};
     AlertEntry alert_latency = {true, (unsigned long) 5 * 60 * 1000, 0, 60000};
 };

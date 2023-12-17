@@ -4,9 +4,10 @@
 
 #include "settings.h"
 
-#define ALERT_HUMIDITY 0u
-#define ALERT_TEMPERATURE 1u
-#define ALERT_SENDING 2u
+#define ALERT_TEMPERATURE 0u
+#define ALERT_CO2 1u
+#define ALERT_HUMIDITY 2u
+#define ALERT_SENDING 3u
 
 struct Alert {
     const int key;

@@ -27,6 +27,10 @@ static WebServer server(80);
         settings.reset();
         server.send(200, "plain/text", "OK");
     });
+    server.on("/co2/calibrate", HTTPMethod::HTTP_POST, [] {
+        Mhz19.calibrate();
+        server.send(200, "plain/text", "OK");
+    });
 
     server.on("/restart", HTTPMethod::HTTP_POST, [] {
         if (settings.is_pending_commit()) {

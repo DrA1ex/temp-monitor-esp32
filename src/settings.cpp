@@ -6,6 +6,7 @@
 
 const char *TEMP_CALIBRATION = "t_cal";
 const char *HUMIDITY_CALIBRATION = "h_cal";
+const char *CO2_CALIBRATION = "co2_cal";
 const char *TEXT_ANIMATION_DELAY = "t_anim_delay";
 const char *TEXT_LOOP_DELAY = "t_loop_delay";
 const char *WIFI_MAX_CONNECT_ATTEMPTS = "wifi_max_attempts";
@@ -15,8 +16,15 @@ const char *SETTINGS_SAVE_INTERVAL = "save_int";
 const char *SCREEN_ROTATION = "s_rot";
 const char *SCREEN_BRIGHTNESS = "s_brt";
 const char *SOUND_INDICATION = "snd";
+const char *FAN_PWM_FREQUENCY = "f_freq";
+const char *FAN_MODE = "f_mode";
+const char *FAN_SENSOR = "f_sensor";
+const char *FAN_MIN_DUTY = "f_min_d";
+const char *FAN_MIN_SENSOR_VALUE = "f_min_v";
+const char *FAN_MAX_SENSOR_VALUE = "f_max_v";
 const char *ALERT_TEMPERATURE = "alert_temp";
 const char *ALERT_HUMIDITY = "alert_hum";
+const char *ALERT_CO2 = "alert_co2";
 const char *ALERT_SEND_LAT = "alert_lat";
 const char *ALERT_ENABLED = "enabled";
 const char *ALERT_INTERVAL = "int";
@@ -78,6 +86,7 @@ String Settings::json() const {
 
     doc[TEMP_CALIBRATION] = _data.temperature_calibration;
     doc[HUMIDITY_CALIBRATION] = _data.humidity_calibration;
+    doc[CO2_CALIBRATION] = _data.co2_calibration;
     doc[TEXT_ANIMATION_DELAY] = _data.text_animation_delay;
     doc[TEXT_LOOP_DELAY] = _data.text_loop_delay;
     doc[WIFI_MAX_CONNECT_ATTEMPTS] = _data.wifi_max_connect_attempts;
@@ -87,8 +96,15 @@ String Settings::json() const {
     doc[SCREEN_ROTATION] = _data.screen_rotation;
     doc[SCREEN_BRIGHTNESS] = _data.screen_brightness;
     doc[SOUND_INDICATION] = _data.sound_indication;
+    doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
+    doc[FAN_MODE] = _data.fan_mode;
+    doc[FAN_SENSOR] = _data.fan_sensor;
+    doc[FAN_MIN_DUTY] = _data.fan_min_duty;
+    doc[FAN_MIN_SENSOR_VALUE] = _data.fan_min_sensor_value;
+    doc[FAN_MAX_SENSOR_VALUE] = _data.fan_max_sensor_value;
 
     write_alert(doc.createNestedObject(ALERT_TEMPERATURE), _data.alert_temperature);
+    write_alert(doc.createNestedObject(ALERT_CO2), _data.alert_co2);
     write_alert(doc.createNestedObject(ALERT_HUMIDITY), _data.alert_humidity);
     write_alert(doc.createNestedObject(ALERT_SEND_LAT), _data.alert_latency);
 
@@ -116,10 +132,10 @@ boolean updateFieldFromRequest(WebServer &server, const char *fieldName, boolean
     return false;
 }
 
-template<typename T, typename = std::enable_if<std::is_integral<T>::value>>
+template<typename T, typename = std::enable_if<std::is_enum<T>::value || std::is_integral<T>::value>>
 boolean updateFieldFromRequest(WebServer &server, const char *fieldName, T &target) {
     if (server.hasArg(fieldName)) {
-        target = server.arg(fieldName).toInt();
+        target = (T) server.arg(fieldName).toInt();
         return true;
     }
 
@@ -142,6 +158,7 @@ bool Settings::update_settings(WebServer &server) {
 
     ret = updateFieldFromRequest(server, TEMP_CALIBRATION, _data.temperature_calibration) || ret;
     ret = updateFieldFromRequest(server, HUMIDITY_CALIBRATION, _data.humidity_calibration) || ret;
+    ret = updateFieldFromRequest(server, CO2_CALIBRATION, _data.co2_calibration) || ret;
     ret = updateFieldFromRequest(server, TEXT_ANIMATION_DELAY, _data.text_animation_delay) || ret;
     ret = updateFieldFromRequest(server, TEXT_LOOP_DELAY, _data.text_loop_delay) || ret;
     ret = updateFieldFromRequest(server, WIFI_MAX_CONNECT_ATTEMPTS, _data.wifi_max_connect_attempts) || ret;
@@ -151,9 +168,19 @@ bool Settings::update_settings(WebServer &server) {
     ret = updateFieldFromRequest(server, SCREEN_ROTATION, _data.screen_rotation) || ret;
     ret = updateFieldFromRequest(server, SCREEN_BRIGHTNESS, _data.screen_brightness) || ret;
     ret = updateFieldFromRequest(server, SOUND_INDICATION, _data.sound_indication) || ret;
+    ret = updateFieldFromRequest(server, FAN_PWM_FREQUENCY, _data.fan_pwm_frequency) || ret;
+    ret = updateFieldFromRequest(server, FAN_MODE, _data.fan_mode) || ret;
+    ret = updateFieldFromRequest(server, FAN_SENSOR, _data.fan_sensor) || ret;
+    ret = updateFieldFromRequest(server, FAN_MIN_DUTY, _data.fan_min_duty) || ret;
+    ret = updateFieldFromRequest(server, FAN_MIN_SENSOR_VALUE, _data.fan_min_sensor_value) || ret;
+    ret = updateFieldFromRequest(server, FAN_MAX_SENSOR_VALUE, _data.fan_max_sensor_value) || ret;
 
     if (server.hasArg(ALERT_TEMPERATURE)) {
         ret = readAlert(server, _data.alert_temperature) || ret;
+    }
+
+    if (server.hasArg(ALERT_CO2)) {
+        ret = readAlert(server, _data.alert_co2) || ret;
     }
 
     if (server.hasArg(ALERT_HUMIDITY)) {

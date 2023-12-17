@@ -13,12 +13,16 @@
 const unsigned int connection_timeout = 1000;
 const unsigned int tcp_timeout = 1000;
 
+static bool fan_window_on = false;
+
 struct SensorData {
     volatile float humidity = NAN;
     volatile float temperature = NAN;
+    volatile float co2 = NAN;
     volatile float send_latency = NAN;
     volatile unsigned long last_update = 0;
     volatile unsigned long last_send = 0;
+    volatile float fan_speed = 0;
 
     String display_string = "";
 
@@ -26,6 +30,8 @@ struct SensorData {
         StaticJsonDocument<256> doc;
         doc["temp"] = temperature;
         doc["hum"] = humidity;
+        doc["co2"] = co2;
+        doc["fan"] = fan_speed;
         doc["lat"] = send_latency;
 
         auto system = doc.createNestedObject("system");
@@ -35,6 +41,23 @@ struct SensorData {
         String result;
         serializeJson(doc, result);
         return result;
+    }
+
+    void update_string() {
+        String co2_formatted;
+        if (!isnan(co2) && co2 >= 1000) {
+            float k = co2 / 1000.0f;
+            unsigned int fraction = 0;
+            if (k - floor(k) > 0.06) fraction = 1;
+
+            co2_formatted = String(k, fraction) + "k";
+        } else {
+            co2_formatted = String(co2, 0);
+        }
+
+        display_string = String(temperature, 1) + " C" + "  "
+                         + co2_formatted + " ppm" + "  "
+                         + String(humidity, 0) + " %";
     }
 };
 
@@ -50,9 +73,10 @@ static SensorData sensor_data;
 static String alert_display_string = "";
 
 static const Alert Alerts[] = {
-        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%", 0},
-        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature,  "TEMP",    "C", 1},
-        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s", 0},
+        {ALERT_TEMPERATURE, settings.get().alert_temperature, sensor_data.temperature,  "TEMP",    "C",   1},
+        {ALERT_CO2,         settings.get().alert_co2,         sensor_data.co2,          "CO2",     "ppm", 0},
+        {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%",   0},
+        {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s",   0},
 };
 
 static HTTPClient http;
@@ -85,7 +109,10 @@ void send_sensor_data() {
         String result;
         StaticJsonDocument<64> doc;
         if (!isnan(sensor_data.temperature)) doc["Tamb"] = sensor_data.temperature;
+        if (!isnan(sensor_data.co2)) doc["CntR"] = sensor_data.co2;
         if (!isnan(sensor_data.humidity)) doc["Hum"] = sensor_data.humidity;
+        if (!isnan(sensor_data.fan_speed)) doc["Fan"] = sensor_data.fan_speed * 100;
+
         serializeJson(doc, result);
 
         http.setConnectTimeout(connection_timeout);
@@ -117,14 +144,83 @@ void send_sensor_data() {
     }
 }
 
+float map_value(float value, float src_from, float src_to, float dst_from, float dst_to) {
+    const float src_range = src_to - src_from;
+    const float dst_range = dst_to - dst_from;
+
+    const float k = dst_range / src_range;
+
+    return max(dst_from, min(dst_to, dst_from + (value - src_from) * k));
+}
+
+float get_sensor_value(SensorType type) {
+    switch (type) {
+        case TEMPERATURE:
+            return sensor_data.temperature;
+
+        case HUMIDITY:
+            return sensor_data.humidity;
+
+        case CO2:
+            return sensor_data.co2;
+
+        default:
+            return NAN;
+    }
+}
+
+void update_fan_speed() {
+#ifndef PIN_FAN_PWM
+    return;
+#endif
+
+    const auto &config = settings.get();
+
+    float fan_duty;
+    float value = get_sensor_value(config.fan_sensor);
+    switch (config.fan_mode) {
+        case PWM:
+            fan_duty = map_value(value, config.fan_min_sensor_value,
+                                 config.fan_max_sensor_value, 0, 1);
+            break;
+
+        case WINDOW:
+            if (fan_window_on && value < config.fan_min_sensor_value) fan_window_on = false;
+            else if (!fan_window_on && value > config.fan_max_sensor_value) fan_window_on = true;
+
+            fan_duty = fan_window_on ? 1 : 0;
+            break;
+
+        case ON:
+            fan_duty = 1;
+            break;
+
+        case OFF:
+        default:
+            fan_duty = 0;
+            break;
+    }
+
+
+    if (isnan(fan_duty) || fan_duty < config.fan_min_duty) fan_duty = 0.0f;
+
+    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (255 * fan_duty));;
+    sensor_data.fan_speed = fan_duty;
+}
+
 void update_sensor_data() {
     const auto &config = settings.get();
     if (sensor_data.last_update == 0ul || (millis() - sensor_data.last_update) > config.sensor_update_interval) {
         sensor_data.humidity = dht.readHumidity() + config.humidity_calibration;
         sensor_data.temperature = dht.readTemperature() + config.temperature_calibration;
 
-        sensor_data.display_string = String(sensor_data.temperature, 1) + " C" + "  "
-                                     + String(sensor_data.humidity, 0) + " %";
+        auto co2 = Mhz19.getCO2(false);
+        if (co2 >= 400 && co2 <= 5000) {
+            sensor_data.co2 = (float) Mhz19.getCO2(false) + config.co2_calibration;
+        }
+
+        update_fan_speed();
+
 
         sensor_data.last_update = millis();
 
@@ -133,7 +229,15 @@ void update_sensor_data() {
         Serial.print(sensor_data.temperature);
         Serial.print("С ");
         Serial.print(sensor_data.humidity);
-        Serial.println("%");
+        Serial.println("% ");
+        Serial.print(sensor_data.co2);
+        Serial.println("ppm");
+
+#ifdef PIN_FAN_PWM
+        Serial.print("Fan PWM duty: ");
+        Serial.print(sensor_data.fan_speed);
+        Serial.print("%");
+#endif
 #endif
     }
 }
@@ -171,7 +275,7 @@ String &get_current_display_string() {
     }
 }
 
-void next_status() {
+void next_step() {
     State next;
     switch (current_state) {
         case PENDING_ALERT:
@@ -185,5 +289,6 @@ void next_status() {
             break;
     }
 
+    sensor_data.update_string();
     current_state = next;
 }

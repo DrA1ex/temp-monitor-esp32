@@ -27,9 +27,9 @@ static uint16_t current_letter_index = 0;
         const uint16_t max_index = width * display_string.length() + end_spacer - spacer;
         if (display_string.length() == 0 || current_letter_index > max_index) {
             current_letter_index = 0;
-            next_status();
-            xSemaphoreGive(wifi_connection_mutex);
+            next_step();
 
+            xSemaphoreGive(wifi_connection_mutex);
             delay(config.text_loop_delay);
             continue;
         }
