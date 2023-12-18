@@ -272,6 +272,7 @@
         }
 
         async function actionRequest(control, url, method = "POST") {
+            const controlText = control.innerText;
             try {
                 control.setAttribute("disabled", "true");
                 control.setAttribute("data-saving", "true");
@@ -280,6 +281,7 @@
             } finally {
                 control.removeAttribute("disabled");
                 control.setAttribute("data-saving", "false");
+                control.innerText = controlText;
             }
         }
 

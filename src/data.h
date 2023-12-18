@@ -227,7 +227,7 @@ void update_sensor_data() {
 
         auto co2 = Mhz19.getCO2(false);
         if (co2 >= 400 && co2 <= 5000) {
-            sensor_data.co2 = (float) Mhz19.getCO2(false) + config.co2_calibration;
+            sensor_data.co2 = (float) co2 + config.co2_calibration;
         }
 
         update_fan_speed();
