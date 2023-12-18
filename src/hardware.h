@@ -16,6 +16,9 @@
 #define UART_CO2 2
 #define PWM_CHANNEL_FAN 5
 
+const unsigned long FAN_PWM_BITS = 8;
+const unsigned long FAN_PWM_RESOLUTION = (1 << (FAN_PWM_BITS + 1)) - 1;
+
 const int numberOfHorizontalDisplays = 1;
 const int numberOfVerticalDisplays = 1;
 

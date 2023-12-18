@@ -18,6 +18,7 @@ static bool fan_window_on = false;
 static bool fan_schedule_on = false;
 static unsigned long fan_schedule_last_on = 0;
 static unsigned long fan_schedule_next_on = 0;
+static unsigned long fan_pwm_freq = 0;
 
 struct SensorData {
     volatile float humidity = NAN;
@@ -190,6 +191,22 @@ void update_fan_speed() {
 
     const auto &config = settings.get();
 
+#ifdef PIN_FAN_PWM
+    if (fan_pwm_freq != config.fan_pwm_frequency) {
+        ledcSetup(PWM_CHANNEL_FAN, config.fan_pwm_frequency, FAN_PWM_BITS);
+        ledcAttachPin(PIN_FAN_PWM, PWM_CHANNEL_FAN);
+
+#ifdef DEBUG
+        Serial.print("Reconfigure Fan PWM  frequency: ");
+        Serial.print(fan_pwm_freq);
+        Serial.print(" >> ");
+        Serial.println(config.fan_pwm_frequency);
+#endif
+
+        fan_pwm_freq = config.fan_pwm_frequency;
+    }
+#endif
+
     float fan_duty = NAN;
     float value = get_sensor_value(config.fan_sensor);
     switch (config.fan_mode) {
@@ -234,7 +251,7 @@ void update_fan_speed() {
 
     if (isnan(fan_duty)) fan_duty = 0.0f;
 
-    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (255 * fan_duty));
+    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (FAN_PWM_RESOLUTION * fan_duty));
     sensor_data.fan_speed = fan_duty * 100;
 }
 

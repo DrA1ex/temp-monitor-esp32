@@ -41,11 +41,6 @@ void setup() {
     Mhz19.setFilter(false);
     Mhz19.autoCalibration(false);
 
-#ifdef PIN_FAN_PWM
-    ledcSetup(PWM_CHANNEL_FAN, config.fan_pwm_frequency, 8);
-    ledcAttachPin(PIN_FAN_PWM, PWM_CHANNEL_FAN);
-#endif
-
     wifi_connect();
     play_sound(SOUND_WIFI_ON);
 

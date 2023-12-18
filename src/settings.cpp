@@ -222,7 +222,7 @@ void Settings::_commit() {
     }
 
 #ifdef DEBUG
-    Serial.println("Plan Settings commit...");
+    Serial.println("Schedule settings commit...");
 #endif
 
     _save_timer_id = _timer.add_timeout([](void *param) {
