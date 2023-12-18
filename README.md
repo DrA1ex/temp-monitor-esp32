@@ -46,4 +46,5 @@ This project is designed to be developed using [PlatformIO](https://platformio.o
 
 To configure monitor visit Web UI at adress `http://<YOUR-ESP32-IP>/`
 
-![UI](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/d995ae59-028e-4cdd-9960-5aada7aa3bea)
+![UI](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/1deb4822-4b00-4dc9-98da-360f61d3a6e2)
+
