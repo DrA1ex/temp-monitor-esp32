@@ -18,6 +18,7 @@ static uint16_t current_letter_index = 0;
             Serial.println("Can't take mutex (ui_loop)");
 #endif
         }
+
         const auto &config = settings.get();
         matrix.setIntensity(config.screen_brightness);
         matrix.setRotation(config.screen_rotation);
@@ -31,6 +32,14 @@ static uint16_t current_letter_index = 0;
 
             xSemaphoreGive(wifi_connection_mutex);
             delay(config.text_loop_delay);
+            continue;
+        }
+
+        if (current_state == State::WARM_UP && sensor_data.ready()) {
+            current_letter_index = 0;
+            next_step();
+
+            xSemaphoreGive(wifi_connection_mutex);
             continue;
         }
 

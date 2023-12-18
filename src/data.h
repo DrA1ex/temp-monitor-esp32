@@ -15,6 +15,10 @@ const unsigned int tcp_timeout = 1000;
 
 static bool fan_window_on = false;
 
+static bool fan_schedule_on = false;
+static unsigned long fan_schedule_last_on = 0;
+static unsigned long fan_schedule_next_on = 0;
+
 struct SensorData {
     volatile float humidity = NAN;
     volatile float temperature = NAN;
@@ -49,7 +53,7 @@ struct SensorData {
 
     void update_string() {
         if (!ready()) {
-            display_string = "Warming up...";
+            display_string = "NO DATA";
             return;
         }
 
@@ -121,7 +125,7 @@ void send_sensor_data() {
         if (!isnan(sensor_data.temperature)) doc["Tamb"] = sensor_data.temperature;
         if (!isnan(sensor_data.co2)) doc["CntR"] = sensor_data.co2;
         if (!isnan(sensor_data.humidity)) doc["Hum"] = sensor_data.humidity;
-        if (!isnan(sensor_data.fan_speed)) doc["Fan"] = sensor_data.fan_speed * 100;
+        if (!isnan(sensor_data.fan_speed)) doc["Fan"] = sensor_data.fan_speed;
 
         serializeJson(doc, result);
 
@@ -186,37 +190,52 @@ void update_fan_speed() {
 
     const auto &config = settings.get();
 
-    float fan_duty;
+    float fan_duty = NAN;
     float value = get_sensor_value(config.fan_sensor);
     switch (config.fan_mode) {
         case PWM:
-            fan_duty = map_value(value, config.fan_min_sensor_value,
-                                 config.fan_max_sensor_value, 0, 1);
+            if (value >= config.fan_min_sensor_value) {
+                fan_duty = map_value(value, config.fan_min_sensor_value, config.fan_max_sensor_value,
+                                     config.fan_min_duty, config.fan_max_duty);
+            } else {
+                fan_duty = 0.0f;
+            }
             break;
 
         case WINDOW:
             if (fan_window_on && value < config.fan_min_sensor_value) fan_window_on = false;
             else if (!fan_window_on && value > config.fan_max_sensor_value) fan_window_on = true;
 
-            fan_duty = fan_window_on ? 1 : 0;
+            fan_duty = fan_window_on ? config.fan_max_duty : config.fan_min_duty;
+            break;
+
+        case SCHEDULE:
+            if (!fan_schedule_on && millis() > fan_schedule_next_on) {
+                fan_schedule_last_on = millis();
+                fan_schedule_on = true;
+            } else if (fan_schedule_on && (millis() - fan_schedule_last_on) / 1000ul > config.fan_min_sensor_value) {
+                fan_schedule_next_on = millis() + config.fan_max_sensor_value * 1000ul;
+                fan_schedule_on = false;
+            }
+
+            fan_duty = fan_schedule_on ? config.fan_max_duty : config.fan_min_duty;
             break;
 
         case ON:
-            fan_duty = 1;
+            fan_duty = config.fan_max_duty;
             break;
 
         case OFF:
         default:
-            fan_duty = 0;
+            fan_duty = 0.0f;
             break;
     }
 
 
-    if (isnan(fan_duty) || fan_duty < config.fan_min_duty) fan_duty = 0.0f;
-    else if (fan_duty > config.fan_max_duty) fan_duty = config.fan_max_duty;
+    if (isnan(fan_duty)) fan_duty = 0.0f;
 
-    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (255 * fan_duty));;
-    sensor_data.fan_speed = fan_duty;
+    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (255 * fan_duty));
+    sensor_data.fan_speed = fan_duty * 100;
 }
 
 void update_sensor_data() {
@@ -274,8 +293,11 @@ void update_sensor_data() {
     }
 }
 
-String &get_current_display_string() {
+String get_current_display_string() {
     switch (current_state) {
+        case WARM_UP:
+            return "Warming up...";
+
         case DISPLAY_ALERT:
             return alert_display_string;
 
@@ -289,6 +311,10 @@ String &get_current_display_string() {
 void next_step() {
     State next;
     switch (current_state) {
+        case WARM_UP:
+            next = sensor_data.ready() ? DISPLAY_SENSOR : WARM_UP;
+            break;
+
         case PENDING_ALERT:
             next = DISPLAY_ALERT;
             break;

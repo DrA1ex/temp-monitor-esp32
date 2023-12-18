@@ -20,8 +20,9 @@ struct AlertEntry {
 enum FanMode : uint8_t {
     PWM = 0,
     WINDOW = 1,
-    ON = 2,
-    OFF = 3,
+    SCHEDULE = 2,
+    ON = 3,
+    OFF = 4,
 };
 
 enum SensorType : uint8_t {
@@ -43,8 +44,8 @@ struct SettingsEntry {
     FanMode fan_mode = FanMode::PWM;
     SensorType fan_sensor = SensorType::CO2;
 
-    float fan_min_duty = 0.1;
-    float fan_max_duty = 1.0;
+    float fan_min_duty = 0.0f;
+    float fan_max_duty = 1.0f;
     float fan_min_sensor_value = 600;
     float fan_max_sensor_value = 2000;
 
