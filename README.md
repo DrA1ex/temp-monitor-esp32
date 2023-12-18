@@ -4,16 +4,26 @@ This project provides a solution for monitoring temperature and humidity using a
 
 ## Schematic
 
-To easily use this project, follow these steps to connect the components:
+To use this project, you will need to build a circuit based on the pin configuration provided in the [/src/hardware.h](/src/hardware.h) file. If you prefer to use custom pins, you can make the necessary modifications in this file.
 
-1. Open the [/src/hardware.h](/src/hardware.h) file and configure the pin connections based on the provided pin configurations.
-   If you prefer using custom pins, make the necessary modifications in this file.
-
-2. In this project, I have substituted the MQ-135 sensor with the MHZ-19B sensor. Additionally, a DC-DC converter is used to power both the controller and the fan from a single DC-Adapter.
-
-**Note:** Depending on your specific setup, you might need additional components such as diodes, capacitors, transistors, and resistors. However, for this particular project, I haven't use any of these additional components.
+The following image showcases the Temperature Humidity Monitor:
 
 ![Temperature Humidity Monitor](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/c39c1a66-210f-49ed-9787-668ba9ce9be8)
+
+For improved accuracy in measuring CO2 levels, the MQ-135 sensor has been replaced with the MHZ-19B sensor. Additionally, a DC-DC converter is used to power both the controller and the fan from a single DC-Adapter.
+
+Please keep in mind that depending on your specific setup, you may require additional components such as diodes, capacitors, transistors, and resistors.
+
+You also have the option to replicate the scheme and circuit that I used. The following images provide details:
+
+![EasyEDA](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/e070e5ef-3617-4df2-a027-a31c3beceb32)
+![Circuit 1](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/b8d0e082-8bfb-4f34-bf44-1e6f64d66fc8)
+![Circuit 2](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/5850c6ee-b798-4c13-8ff0-22e01d19ab2f)
+
+If you require the Gerber file for this project, you can download it from [here](https://github.com/DrA1ex/temp-monitor-esp32/files/13700695/Gerber_temp_monit_esp_2023-12-18.zip).
+
+Note: The linear stabilizer (7805) may require passive or active cooling. If desired, you can replace it with any impulse converter. In my implementation, I used [this](https://ali.onl/2fg6) module.
+
 
 ## Build
 
