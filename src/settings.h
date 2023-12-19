@@ -3,33 +3,13 @@
 #include <EEPROM.h>
 
 #include "debug.h"
+#include "models.h"
 #include "timer.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 6
+#define SETTINGS_VERSION (int) 7
 
 class WebServer;
-
-struct AlertEntry {
-    boolean enabled;
-    unsigned long alert_interval;
-    float min;
-    float max;
-};
-
-enum FanMode : uint8_t {
-    PWM = 0,
-    WINDOW = 1,
-    SCHEDULE = 2,
-    ON = 3,
-    OFF = 4,
-};
-
-enum SensorType : uint8_t {
-    TEMPERATURE = 0,
-    HUMIDITY = 1,
-    CO2 = 2
-};
 
 struct SettingsEntry {
     int header = SETTINGS_HEADER;
@@ -48,6 +28,8 @@ struct SettingsEntry {
     float fan_max_duty = 1.0f;
     float fan_min_sensor_value = 600;
     float fan_max_sensor_value = 2000;
+    unsigned long fan_max_active_time = 360;
+    unsigned long fan_active_time_window = 3600;
 
     unsigned int text_animation_delay = 80;
     unsigned int text_loop_delay = 3000;

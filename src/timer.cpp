@@ -6,7 +6,9 @@
 Timer::~Timer() {
     if (_entries == nullptr) return;
 
+    delete[] _entries;
     _entries = nullptr;
+
     _count = 0;
     _free_count = 0;
 }
@@ -28,7 +30,7 @@ void Timer::clear_interval(unsigned long timer_id) {
 }
 
 void Timer::handle_timers() {
-    if (_count == _free_count) return;
+    if (_entries == nullptr || _count == _free_count) return;
 
     const auto now = millis();
     for (unsigned long i = 0; i < _count; ++i) {
@@ -102,8 +104,12 @@ void Timer::_grow() {
     const unsigned long new_count = _count + GROW_AMOUNT;
     TimerEntry *new_data = new TimerEntry[new_count];
 
-    for (unsigned long i = 0; i < _count; ++i) {
-        new_data[i] = _entries[i];
+    if (_entries != nullptr) {
+        for (unsigned long i = 0; i < _count; ++i) {
+            new_data[i] = _entries[i];
+        }
+
+        delete[] _entries;
     }
 
 #ifdef DEBUG

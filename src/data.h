@@ -6,74 +6,14 @@
 #include "alert.h"
 #include "credentials.h"
 #include "debug.h"
+#include "fan.h"
 #include "hardware.h"
+#include "models.h"
 #include "settings.h"
 #include "wifi_control.h"
 
 const unsigned int connection_timeout = 1000;
 const unsigned int tcp_timeout = 1000;
-
-static bool fan_window_on = false;
-
-static bool fan_schedule_on = false;
-static unsigned long fan_schedule_last_on = 0;
-static unsigned long fan_schedule_next_on = 0;
-static unsigned long fan_pwm_freq = 0;
-
-struct SensorData {
-    volatile float humidity = NAN;
-    volatile float temperature = NAN;
-    volatile float co2 = NAN;
-    volatile float send_latency = NAN;
-    volatile unsigned long last_update = 0;
-    volatile unsigned long last_send = 0;
-    volatile float fan_speed = 0;
-
-    String display_string = "";
-
-    bool ready() {
-        return !isnan(humidity) || !isnan(temperature) || !isnan(co2);
-    }
-
-    String json() const {
-        StaticJsonDocument<256> doc;
-        doc["temp"] = temperature;
-        doc["hum"] = humidity;
-        doc["co2"] = co2;
-        doc["fan"] = fan_speed;
-        doc["lat"] = send_latency;
-
-        auto system = doc.createNestedObject("system");
-        system["uptime"] = esp_timer_get_time() / 1000000ULL;
-        system["wifi"] = WiFi.RSSI();
-
-        String result;
-        serializeJson(doc, result);
-        return result;
-    }
-
-    void update_string() {
-        if (!ready()) {
-            display_string = "NO DATA";
-            return;
-        }
-
-        String co2_formatted;
-        if (!isnan(co2) && co2 >= 1000) {
-            float k = co2 / 1000.0f;
-            unsigned int fraction = 0;
-            if (k - floor(k) > 0.06) fraction = 1;
-
-            co2_formatted = String(k, fraction) + "k";
-        } else {
-            co2_formatted = String(co2, 0);
-        }
-
-        display_string = String(temperature, 1) + " C" + "  "
-                         + co2_formatted + " ppm" + "  "
-                         + String(humidity, 0) + " %";
-    }
-};
 
 enum State : uint8_t {
     WARM_UP,
@@ -159,101 +99,6 @@ void send_sensor_data() {
     }
 }
 
-float map_value(float value, float src_from, float src_to, float dst_from, float dst_to) {
-    const float src_range = src_to - src_from;
-    const float dst_range = dst_to - dst_from;
-
-    const float k = dst_range / src_range;
-
-    return max(dst_from, min(dst_to, dst_from + (value - src_from) * k));
-}
-
-float get_sensor_value(SensorType type) {
-    switch (type) {
-        case TEMPERATURE:
-            return sensor_data.temperature;
-
-        case HUMIDITY:
-            return sensor_data.humidity;
-
-        case CO2:
-            return sensor_data.co2;
-
-        default:
-            return NAN;
-    }
-}
-
-void update_fan_speed() {
-#ifndef PIN_FAN_PWM
-    return;
-#endif
-
-    const auto &config = settings.get();
-
-#ifdef PIN_FAN_PWM
-    if (fan_pwm_freq != config.fan_pwm_frequency) {
-        ledcSetup(PWM_CHANNEL_FAN, config.fan_pwm_frequency, FAN_PWM_BITS);
-        ledcAttachPin(PIN_FAN_PWM, PWM_CHANNEL_FAN);
-
-#ifdef DEBUG
-        Serial.print("Reconfigure Fan PWM  frequency: ");
-        Serial.print(fan_pwm_freq);
-        Serial.print(" >> ");
-        Serial.println(config.fan_pwm_frequency);
-#endif
-
-        fan_pwm_freq = config.fan_pwm_frequency;
-    }
-#endif
-
-    float fan_duty = NAN;
-    float value = get_sensor_value(config.fan_sensor);
-    switch (config.fan_mode) {
-        case PWM:
-            if (value >= config.fan_min_sensor_value) {
-                fan_duty = map_value(value, config.fan_min_sensor_value, config.fan_max_sensor_value,
-                                     config.fan_min_duty, config.fan_max_duty);
-            } else {
-                fan_duty = 0.0f;
-            }
-            break;
-
-        case WINDOW:
-            if (fan_window_on && value < config.fan_min_sensor_value) fan_window_on = false;
-            else if (!fan_window_on && value > config.fan_max_sensor_value) fan_window_on = true;
-
-            fan_duty = fan_window_on ? config.fan_max_duty : config.fan_min_duty;
-            break;
-
-        case SCHEDULE:
-            if (!fan_schedule_on && millis() > fan_schedule_next_on) {
-                fan_schedule_last_on = millis();
-                fan_schedule_on = true;
-            } else if (fan_schedule_on && (millis() - fan_schedule_last_on) / 1000ul > config.fan_min_sensor_value) {
-                fan_schedule_next_on = millis() + config.fan_max_sensor_value * 1000ul;
-                fan_schedule_on = false;
-            }
-
-            fan_duty = fan_schedule_on ? config.fan_max_duty : config.fan_min_duty;
-            break;
-
-        case ON:
-            fan_duty = config.fan_max_duty;
-            break;
-
-        case OFF:
-        default:
-            fan_duty = 0.0f;
-            break;
-    }
-
-
-    if (isnan(fan_duty)) fan_duty = 0.0f;
-
-    ledcWrite(PWM_CHANNEL_FAN, (uint32_t) (FAN_PWM_RESOLUTION * fan_duty));
-    sensor_data.fan_speed = fan_duty * 100;
-}
 
 void update_sensor_data() {
     const auto &config = settings.get();
@@ -266,9 +111,7 @@ void update_sensor_data() {
             sensor_data.co2 = (float) co2 + config.co2_calibration;
         }
 
-        update_fan_speed();
-
-
+        update_fan_speed(sensor_data);
         sensor_data.last_update = millis();
 
 #ifdef DEBUG
@@ -283,7 +126,7 @@ void update_sensor_data() {
 #ifdef PIN_FAN_PWM
         Serial.print("Fan PWM duty: ");
         Serial.print(sensor_data.fan_speed);
-        Serial.print("%");
+        Serial.println("%");
 #endif
 #endif
     }

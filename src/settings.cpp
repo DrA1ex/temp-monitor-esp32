@@ -23,6 +23,8 @@ const char *FAN_MIN_DUTY = "f_min_d";
 const char *FAN_MAX_DUTY = "f_max_d";
 const char *FAN_MIN_SENSOR_VALUE = "f_min_v";
 const char *FAN_MAX_SENSOR_VALUE = "f_max_v";
+const char *FAN_MAX_ACTIVE_TIME = "f_max_act_time";
+const char *FAN_ACTIVE_TIME_WINDOW = "f_act_time_w";
 const char *ALERT_TEMPERATURE = "alert_temp";
 const char *ALERT_HUMIDITY = "alert_hum";
 const char *ALERT_CO2 = "alert_co2";
@@ -101,6 +103,8 @@ String Settings::json() const {
     doc[FAN_MODE] = _data.fan_mode;
     doc[FAN_MIN_SENSOR_VALUE] = _data.fan_min_sensor_value;
     doc[FAN_MAX_SENSOR_VALUE] = _data.fan_max_sensor_value;
+    doc[FAN_MAX_ACTIVE_TIME] = _data.fan_max_active_time;
+    doc[FAN_ACTIVE_TIME_WINDOW] = _data.fan_active_time_window;
     doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
     doc[FAN_MIN_DUTY] = _data.fan_min_duty;
     doc[FAN_MAX_DUTY] = _data.fan_max_duty;
@@ -177,6 +181,8 @@ bool Settings::update_settings(WebServer &server) {
     ret = updateFieldFromRequest(server, FAN_MAX_DUTY, _data.fan_max_duty) || ret;
     ret = updateFieldFromRequest(server, FAN_MIN_SENSOR_VALUE, _data.fan_min_sensor_value) || ret;
     ret = updateFieldFromRequest(server, FAN_MAX_SENSOR_VALUE, _data.fan_max_sensor_value) || ret;
+    ret = updateFieldFromRequest(server, FAN_MAX_ACTIVE_TIME, _data.fan_max_active_time) || ret;
+    ret = updateFieldFromRequest(server, FAN_ACTIVE_TIME_WINDOW, _data.fan_active_time_window) || ret;
 
     if (server.hasArg(ALERT_TEMPERATURE)) {
         ret = readAlert(server, _data.alert_temperature) || ret;
