@@ -31,23 +31,6 @@ struct SensorData {
         return !isnan(humidity) || !isnan(temperature) || !isnan(co2);
     }
 
-    String json() const {
-        StaticJsonDocument<256> doc;
-        doc["temp"] = temperature;
-        doc["hum"] = humidity;
-        doc["co2"] = co2;
-        doc["fan"] = fan_speed;
-        doc["lat"] = send_latency;
-
-        auto system = doc.createNestedObject("system");
-        system["uptime"] = esp_timer_get_time() / 1000000ULL;
-        system["wifi"] = WiFi.RSSI();
-
-        String result;
-        serializeJson(doc, result);
-        return result;
-    }
-
     float get_sensor_value(SensorType type) {
         switch (type) {
             case SensorType::TEMPERATURE:

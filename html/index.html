@@ -357,6 +357,7 @@
 
             document.getElementById("uptime").innerText = formatTimeSpan(data.system.uptime);
             document.getElementById("wifi").innerText = data.system.wifi;
+            document.getElementById("config_p").innerText = data.system.config_p ? "Pending" : "Saved";
 
             setTimeout(_updateSensors, 3000);
         }
@@ -414,5 +415,6 @@
 <p id="extra" class="status" style="visibility: collapse">
     Uptime: <span id="uptime">...</span>,
     WiFi: <span id="wifi">...</span> dB
+    Settings: <span id="config_p">...</span>
 </p>
 </body>

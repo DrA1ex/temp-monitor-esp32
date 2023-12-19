@@ -38,16 +38,16 @@ struct SettingsEntry {
     unsigned long sensor_update_interval = (unsigned long) 5 * 1000;
     unsigned long sensor_send_interval = (unsigned long) 15 * 1000;
 
-    unsigned long settings_save_interval = 60000;
+    unsigned long settings_save_interval = 15000;
 
-    uint8_t screen_rotation = 1;
-    uint8_t screen_brightness = 3;
+    uint8_t screen_rotation = 3;
+    uint8_t screen_brightness = 5;
 
     boolean sound_indication = true;
 
     AlertEntry alert_temperature = {true, (unsigned long) 5 * 60 * 1000, 22, 24};
     AlertEntry alert_co2 = {true, (unsigned long) 5 * 60 * 1000, 400, 1500};
-    AlertEntry alert_humidity = {false, (unsigned long) 5 * 60 * 1000, 80, 100};
+    AlertEntry alert_humidity = {true, (unsigned long) 5 * 60 * 1000, 80, 100};
     AlertEntry alert_latency = {true, (unsigned long) 5 * 60 * 1000, 0, 60000};
 };
 
