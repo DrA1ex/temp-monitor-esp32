@@ -177,7 +177,7 @@
             "upd_interval": "Update interval, ms",
             "send_int": "Send interval, ms",
             "save_int": "Settings save interval, ms",
-            "s_rot": "Rotation (0-3)",
+            "s_rot": "Rotation",
             "s_brt": "Brightness, (0-15)",
             "snd": "Sound indication",
             "f_freq": "PWM frequency",
@@ -200,6 +200,10 @@
         }
 
         const SettingsKeyConfig = {
+            "s_rot": {
+                type: "select",
+                options: ["0º", "90º", "180º", "270º"]
+            },
             "f_mode": {
                 type: "select",
                 options: ["PWM", "Window", "Schedule", "Always on", "Always off"]
