@@ -40,6 +40,7 @@ static uint16_t current_letter_index = 0;
             next_step();
 
             xSemaphoreGive(wifi_connection_mutex);
+            delay(config.text_animation_delay);
             continue;
         }
 
