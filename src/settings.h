@@ -15,7 +15,7 @@ struct SettingsEntry {
     int header = SETTINGS_HEADER;
     int version = SETTINGS_VERSION;
 
-    float temperature_calibration = -0.4f;
+    float temperature_calibration = 0.0f;
     float humidity_calibration = 0.0f;
     float co2_calibration = 0.0f;
 
