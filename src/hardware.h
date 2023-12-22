@@ -12,12 +12,16 @@
 #define PIN_MATRIX_CS 5
 #define PIN_SPEAKER 15
 #define PIN_FAN_PWM 32
+#define PIN_HUMIDIFIER_PWM 33
 
 #define UART_CO2 2
+
 #define PWM_CHANNEL_FAN 5
+#define PWM_CHANNEL_HUMIDIFIER 6
+
 
 const unsigned long FAN_PWM_BITS = 8;
-const unsigned long FAN_PWM_RESOLUTION = (1 << (FAN_PWM_BITS + 1)) - 1;
+const unsigned long HUMIDIFIER_PWM_BITS = 8;
 
 const int numberOfHorizontalDisplays = 1;
 const int numberOfVerticalDisplays = 1;

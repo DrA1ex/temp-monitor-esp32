@@ -2,7 +2,7 @@
 
 #include "ArduinoJson.h"
 
-enum FanMode : uint8_t {
+enum ScheduleMode : uint8_t {
     PWM = 0,
     WINDOW = 1,
     SCHEDULE = 2,
@@ -24,14 +24,15 @@ struct SensorData {
     volatile unsigned long last_update = 0;
     volatile unsigned long last_send = 0;
     volatile float fan_speed = 0;
+    volatile float humidifier_power = 0;
 
     String display_string = "";
 
-    bool ready() {
+    bool ready() const {
         return !isnan(humidity) || !isnan(temperature) || !isnan(co2);
     }
 
-    float get_sensor_value(SensorType type) {
+    float get_sensor_value(SensorType type) const {
         switch (type) {
             case SensorType::TEMPERATURE:
                 return temperature;
@@ -75,4 +76,20 @@ struct AlertEntry {
     unsigned long alert_interval;
     float min;
     float max;
+};
+
+struct ScheduleEntry {
+    ScheduleMode mode;
+    SensorType sensor;
+
+    float min_sensor_value;
+    float max_sensor_value;
+
+    unsigned long max_active_time;
+    unsigned long active_time_window;
+
+    unsigned long pwm_frequency;
+
+    float min_duty;
+    float max_duty;
 };

@@ -38,7 +38,6 @@ void setup() {
     Mhz19.begin(co2Uart);
 
     Mhz19.setRange(5000);
-    Mhz19.setFilter(false);
     Mhz19.autoCalibration(false);
 
     wifi_connect();

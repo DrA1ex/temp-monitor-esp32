@@ -157,7 +157,7 @@
         const SettingsGroup = {
             "Sensors": ["t_cal", "h_cal", "co2_cal", "upd_interval", "send_int"],
             "UI": ["t_anim_delay", "t_loop_delay", "s_rot", "s_brt", "snd"],
-            "Fan Control": ["f_freq", "f_mode", "f_sensor", "f_min_d", "f_max_d", "f_min_v", "f_max_v", "f_max_act_time", "f_act_time_w"],
+            "Schedule": ["fan", "humr"],
             "Alerts": ["alert_temp", "alert_co2", "alert_hum", "alert_lat"],
             "Other": [],
         };
@@ -180,15 +180,17 @@
             "s_rot": "Rotation",
             "s_brt": "Brightness, (0-15)",
             "snd": "Sound indication",
-            "f_freq": "PWM frequency",
-            "f_mode": "Mode",
-            "f_sensor": "Sensor",
-            "f_min_d": "Min Duty value (0-1)",
-            "f_max_d": "Max Duty value (0-1)",
-            "f_min_v": "Min Sensor value",
-            "f_max_v": "Max Sensor value",
-            "f_max_act_time": "Max active time, s",
-            "f_act_time_w": "Active time window, s",
+            "fan": "Fan schedule",
+            "humr": "Humidifier schedule",
+            "freq": "PWM frequency",
+            "mode": "Mode",
+            "sensor": "Sensor",
+            "min_d": "Min Duty value (0-1)",
+            "max_d": "Max Duty value (0-1)",
+            "min_v": "Min Sensor value",
+            "max_v": "Max Sensor value",
+            "max_act_time": "Max active time, s",
+            "act_time_w": "Active time window, s",
             "alert_temp": "Alert Temperature, Cº",
             "alert_co2": "Alert CO2, ppm",
             "alert_hum": "Alert Humidity, %",
@@ -204,11 +206,11 @@
                 type: "select",
                 options: ["0º", "90º", "180º", "270º"]
             },
-            "f_mode": {
+            "mode": {
                 type: "select",
                 options: ["PWM", "Window", "Schedule", "Always on", "Always off"]
             },
-            "f_sensor": {
+            "sensor": {
                 type: "select",
                 options: ["Temperature", "Humidity", "CO2"]
             },
@@ -239,10 +241,11 @@
 
         function _createControl(parent, key, value) {
             const title = document.createElement("p");
-            title.innerText = SettingsMap[key.split(".").reverse()[0]];
+            const propKey = key.split(".").at(-1)
+            title.innerText = SettingsMap[propKey];
 
             let control;
-            const type = SettingsKeyConfig[key]?.type;
+            const type = SettingsKeyConfig[propKey]?.type;
             if (type === "trigger" || (!type && typeof value === "boolean")) {
                 control = document.createElement("a");
                 control.classList.add("button");
@@ -257,10 +260,10 @@
                 dOpt.setAttribute("disabled", "");
                 control.appendChild(dOpt);
 
-                for (let i = 0; i < SettingsKeyConfig[key].options.length; i++) {
+                for (let i = 0; i < SettingsKeyConfig[propKey].options.length; i++) {
                     const opt = document.createElement("option");
                     opt.value = i.toString();
-                    opt.innerText = SettingsKeyConfig[key].options[i];
+                    opt.innerText = SettingsKeyConfig[propKey].options[i];
                     control.appendChild(opt);
                 }
 
@@ -380,6 +383,7 @@
             hum: {el: document.getElementById("hum"), fraction: 0},
             co2: {el: document.getElementById("co2"), fraction: 0},
             fan: {el: document.getElementById("fan"), fraction: 0},
+            humr: {el: document.getElementById("humr"), fraction: 0},
             lat: {el: document.getElementById("lat"), fraction: 0}
         }
 
@@ -438,6 +442,7 @@
     Humidity: <span id=hum>...</span>%,
     CO2: <span id=co2>...</span>ppm,
     Fan: <span id=fan>...</span>%,
+    Humidifier: <span id=humr>...</span>%,
     Latency: <span id="lat">...</span> ms
 </p>
 <div class="content">

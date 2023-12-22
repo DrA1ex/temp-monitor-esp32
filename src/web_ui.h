@@ -14,6 +14,7 @@ String status_json() {
     doc["hum"] = sensor_data.humidity;
     doc["co2"] = sensor_data.co2;
     doc["fan"] = sensor_data.fan_speed;
+    doc["humr"] = sensor_data.humidifier_power;
     doc["lat"] = sensor_data.send_latency;
 
     auto system = doc.createNestedObject("system");

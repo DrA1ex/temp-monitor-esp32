@@ -16,15 +16,17 @@ const char *SETTINGS_SAVE_INTERVAL = "save_int";
 const char *SCREEN_ROTATION = "s_rot";
 const char *SCREEN_BRIGHTNESS = "s_brt";
 const char *SOUND_INDICATION = "snd";
-const char *FAN_PWM_FREQUENCY = "f_freq";
-const char *FAN_MODE = "f_mode";
-const char *FAN_SENSOR = "f_sensor";
-const char *FAN_MIN_DUTY = "f_min_d";
-const char *FAN_MAX_DUTY = "f_max_d";
-const char *FAN_MIN_SENSOR_VALUE = "f_min_v";
-const char *FAN_MAX_SENSOR_VALUE = "f_max_v";
-const char *FAN_MAX_ACTIVE_TIME = "f_max_act_time";
-const char *FAN_ACTIVE_TIME_WINDOW = "f_act_time_w";
+const char *SCHEDULE_FAN = "fan";
+const char *SCHEDULE_HUMIDIFIER = "humr";
+const char *SCHEDULE_PWM_FREQUENCY = "freq";
+const char *SCHEDULE_MODE = "mode";
+const char *SCHEDULE_SENSOR = "sensor";
+const char *SCHEDULE_MIN_DUTY = "min_d";
+const char *SCHEDULE_MAX_DUTY = "max_d";
+const char *SCHEDULE_MIN_SENSOR_VALUE = "min_v";
+const char *SCHEDULE_MAX_SENSOR_VALUE = "max_v";
+const char *SCHEDULE_MAX_ACTIVE_TIME = "max_act_time";
+const char *SCHEDULE_ACTIVE_TIME_WINDOW = "act_time_w";
 const char *ALERT_TEMPERATURE = "alert_temp";
 const char *ALERT_HUMIDITY = "alert_hum";
 const char *ALERT_CO2 = "alert_co2";
@@ -36,9 +38,7 @@ const char *ALERT_MAX = "max";
 
 volatile boolean Settings::_initialized = false;
 
-Settings::Settings(Timer timer) {
-    _timer = timer;
-}
+Settings::Settings(Timer &timer) : _timer(timer) {}
 
 void Settings::begin() {
     if (!Settings::_initialized) {
@@ -84,6 +84,20 @@ JsonObject write_alert(JsonObject obj, const AlertEntry &entry) {
     return obj;
 }
 
+JsonObject write_schedule(JsonObject obj, const ScheduleEntry &entry) {
+    obj[SCHEDULE_SENSOR] = entry.sensor;
+    obj[SCHEDULE_MODE] = entry.mode;
+    obj[SCHEDULE_MIN_SENSOR_VALUE] = entry.min_sensor_value;
+    obj[SCHEDULE_MAX_SENSOR_VALUE] = entry.max_sensor_value;
+    obj[SCHEDULE_MAX_ACTIVE_TIME] = entry.max_active_time;
+    obj[SCHEDULE_ACTIVE_TIME_WINDOW] = entry.active_time_window;
+    obj[SCHEDULE_PWM_FREQUENCY] = entry.pwm_frequency;
+    obj[SCHEDULE_MIN_DUTY] = entry.min_duty;
+    obj[SCHEDULE_MAX_DUTY] = entry.max_duty;
+
+    return obj;
+}
+
 String Settings::json() const {
     StaticJsonDocument<1024> doc;
 
@@ -99,15 +113,9 @@ String Settings::json() const {
     doc[SCREEN_ROTATION] = _data.screen_rotation;
     doc[SCREEN_BRIGHTNESS] = _data.screen_brightness;
     doc[SOUND_INDICATION] = _data.sound_indication;
-    doc[FAN_SENSOR] = _data.fan_sensor;
-    doc[FAN_MODE] = _data.fan_mode;
-    doc[FAN_MIN_SENSOR_VALUE] = _data.fan_min_sensor_value;
-    doc[FAN_MAX_SENSOR_VALUE] = _data.fan_max_sensor_value;
-    doc[FAN_MAX_ACTIVE_TIME] = _data.fan_max_active_time;
-    doc[FAN_ACTIVE_TIME_WINDOW] = _data.fan_active_time_window;
-    doc[FAN_PWM_FREQUENCY] = _data.fan_pwm_frequency;
-    doc[FAN_MIN_DUTY] = _data.fan_min_duty;
-    doc[FAN_MAX_DUTY] = _data.fan_max_duty;
+
+    write_schedule(doc.createNestedObject(SCHEDULE_FAN), _data.fan_schedule);
+    write_schedule(doc.createNestedObject(SCHEDULE_HUMIDIFIER), _data.humidifier_schedule);
 
     write_alert(doc.createNestedObject(ALERT_TEMPERATURE), _data.alert_temperature);
     write_alert(doc.createNestedObject(ALERT_CO2), _data.alert_co2);
@@ -159,6 +167,22 @@ boolean readAlert(WebServer &server, AlertEntry &entry) {
     return ret;
 }
 
+boolean readSchedule(WebServer &server, ScheduleEntry &entry) {
+    boolean ret = false;
+
+    ret = updateFieldFromRequest(server, SCHEDULE_PWM_FREQUENCY, entry.pwm_frequency) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MODE, entry.mode) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_SENSOR, entry.sensor) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MIN_DUTY, entry.min_duty) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MAX_DUTY, entry.max_duty) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MIN_SENSOR_VALUE, entry.min_sensor_value) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MAX_SENSOR_VALUE, entry.max_sensor_value) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_MAX_ACTIVE_TIME, entry.max_active_time) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_ACTIVE_TIME_WINDOW, entry.active_time_window) || ret;
+
+    return ret;
+}
+
 bool Settings::update_settings(WebServer &server) {
     boolean ret = false;
 
@@ -174,15 +198,14 @@ bool Settings::update_settings(WebServer &server) {
     ret = updateFieldFromRequest(server, SCREEN_ROTATION, _data.screen_rotation) || ret;
     ret = updateFieldFromRequest(server, SCREEN_BRIGHTNESS, _data.screen_brightness) || ret;
     ret = updateFieldFromRequest(server, SOUND_INDICATION, _data.sound_indication) || ret;
-    ret = updateFieldFromRequest(server, FAN_PWM_FREQUENCY, _data.fan_pwm_frequency) || ret;
-    ret = updateFieldFromRequest(server, FAN_MODE, _data.fan_mode) || ret;
-    ret = updateFieldFromRequest(server, FAN_SENSOR, _data.fan_sensor) || ret;
-    ret = updateFieldFromRequest(server, FAN_MIN_DUTY, _data.fan_min_duty) || ret;
-    ret = updateFieldFromRequest(server, FAN_MAX_DUTY, _data.fan_max_duty) || ret;
-    ret = updateFieldFromRequest(server, FAN_MIN_SENSOR_VALUE, _data.fan_min_sensor_value) || ret;
-    ret = updateFieldFromRequest(server, FAN_MAX_SENSOR_VALUE, _data.fan_max_sensor_value) || ret;
-    ret = updateFieldFromRequest(server, FAN_MAX_ACTIVE_TIME, _data.fan_max_active_time) || ret;
-    ret = updateFieldFromRequest(server, FAN_ACTIVE_TIME_WINDOW, _data.fan_active_time_window) || ret;
+
+    if (server.hasArg(SCHEDULE_FAN)) {
+        ret = readSchedule(server, _data.fan_schedule) || ret;
+    }
+
+    if (server.hasArg(SCHEDULE_HUMIDIFIER)) {
+        ret = readSchedule(server, _data.humidifier_schedule) || ret;
+    }
 
     if (server.hasArg(ALERT_TEMPERATURE)) {
         ret = readAlert(server, _data.alert_temperature) || ret;
@@ -209,7 +232,7 @@ void Settings::reset() {
 }
 
 
-void _commit_impl(int offset, const SettingsEntry &data) {
+void _settings_commit_impl(int offset, const SettingsEntry &data) {
     EEPROM.put(offset, data);
     auto success = EEPROM.commit();
 
@@ -231,10 +254,10 @@ void Settings::_commit() {
     Serial.println("Schedule settings commit...");
 #endif
 
-    _save_timer_id = _timer.add_timeout([](void *param) {
-        Settings *self = (Settings *) param;
+    _save_timer_id = (long) _timer.add_timeout([](void *param) {
+        auto *self = (Settings *) param;
         self->_save_timer_id = -1;
-        _commit_impl(Settings::_offset, self->_data);
+        _settings_commit_impl(Settings::_offset, self->_data);
     }, _data.settings_save_interval, this);
 }
 
@@ -246,5 +269,5 @@ void Settings::force_save() {
         _timer.clear_timeout(_save_timer_id);
     }
 
-    _commit_impl(Settings::_offset, _data);
+    _settings_commit_impl(Settings::_offset, _data);
 }

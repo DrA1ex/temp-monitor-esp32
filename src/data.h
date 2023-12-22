@@ -6,9 +6,9 @@
 #include "alert.h"
 #include "credentials.h"
 #include "debug.h"
-#include "fan.h"
 #include "hardware.h"
 #include "models.h"
+#include "schedule.h"
 #include "settings.h"
 #include "wifi_control.h"
 
@@ -32,6 +32,17 @@ static const Alert Alerts[] = {
         {ALERT_CO2,         settings.get().alert_co2,         sensor_data.co2,          "CO2",     "ppm", 0},
         {ALERT_HUMIDITY,    settings.get().alert_humidity,    sensor_data.humidity,     "HUM",     "%",   0},
         {ALERT_SENDING,     settings.get().alert_latency,     sensor_data.send_latency, "LATENCY", "s",   0},
+};
+
+static Schedule Schedules[] = {
+#ifdef PIN_FAN_PWM
+        {PIN_FAN_PWM, PWM_CHANNEL_FAN, FAN_PWM_BITS,
+         (float &) sensor_data.fan_speed, settings.get().fan_schedule},
+#endif
+#ifdef PIN_HUMIDIFIER_PWM
+        {PIN_HUMIDIFIER_PWM, PWM_CHANNEL_HUMIDIFIER, HUMIDIFIER_PWM_BITS,
+         (float &) sensor_data.humidifier_power, settings.get().humidifier_schedule},
+#endif
 };
 
 static HTTPClient http;
@@ -62,11 +73,12 @@ void send_sensor_data() {
         Serial.println("Sending sensor data...");
 #endif
         String result;
-        StaticJsonDocument<64> doc;
+        StaticJsonDocument<128> doc;
         if (!isnan(sensor_data.temperature)) doc["Tamb"] = sensor_data.temperature;
         if (!isnan(sensor_data.co2)) doc["CntR"] = sensor_data.co2;
         if (!isnan(sensor_data.humidity)) doc["Hum"] = sensor_data.humidity;
         if (!isnan(sensor_data.fan_speed)) doc["Fan"] = sensor_data.fan_speed;
+        if (!isnan(sensor_data.humidifier_power)) doc["HumR"] = sensor_data.humidifier_power;
 
         serializeJson(doc, result);
 
@@ -111,21 +123,30 @@ void update_sensor_data() {
             sensor_data.co2 = (float) co2 + config.co2_calibration;
         }
 
-        update_fan_speed(sensor_data);
+        for (auto &schedule: Schedules) {
+            schedule.update(sensor_data);
+        }
+
         sensor_data.last_update = millis();
 
 #ifdef DEBUG
         Serial.print("Sensor Data: ");
         Serial.print(sensor_data.temperature);
-        Serial.print("С ");
-        Serial.print(sensor_data.humidity);
-        Serial.println("% ");
+        Serial.print(" С ");
         Serial.print(sensor_data.co2);
-        Serial.println("ppm");
+        Serial.print(" ppm ");
+        Serial.print(sensor_data.humidity);
+        Serial.println("%");
 
 #ifdef PIN_FAN_PWM
         Serial.print("Fan PWM duty: ");
         Serial.print(sensor_data.fan_speed);
+        Serial.println("%");
+#endif
+
+#ifdef PIN_HUMIDIFIER_PWM
+        Serial.print("Humidifier PWM duty: ");
+        Serial.print(sensor_data.humidifier_power);
         Serial.println("%");
 #endif
 #endif
