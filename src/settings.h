@@ -7,7 +7,7 @@
 #include "timer.h"
 
 #define SETTINGS_HEADER (int) 0xffaabbcc
-#define SETTINGS_VERSION (int) 8
+#define SETTINGS_VERSION (int) 9
 
 class WebServer;
 
@@ -38,8 +38,8 @@ struct SettingsEntry {
     AlertEntry alert_humidity = {true, (unsigned long) 5 * 60 * 1000, 80, 100};
     AlertEntry alert_latency = {true, (unsigned long) 5 * 60 * 1000, 0, 60000};
 
-    ScheduleEntry fan_schedule = {ScheduleMode::PWM, SensorType::CO2, 500, 1000, 480, 3600, 26000, 0, 1};
-    ScheduleEntry humidifier_schedule = {ScheduleMode::PWM, SensorType::HUMIDITY, 100, 80, 480, 3600, 26000, 0, 1};
+    ScheduleEntry fan_schedule = {ScheduleMode::PWM, SensorType::CO2, 500, 1000, 480, 3600, 0, 26000, 0, 1};
+    ScheduleEntry humidifier_schedule = {ScheduleMode::PWM, SensorType::HUMIDITY, 100, 80, 480, 3600, 0, 26000, 0, 1};
 };
 
 typedef void (*update_fn)(SettingsEntry &data);
@@ -54,7 +54,7 @@ class Settings {
     long _save_timer_id = -1;
 
 public:
-    Settings(Timer& timer);
+    Settings(Timer &timer);
 
     inline Timer &timer() { return _timer; }
 

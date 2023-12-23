@@ -25,7 +25,8 @@ class Schedule {
     bool _window_on = false;
 
     unsigned long _last_update = 0;
-    bool _window_can_be_active = true;
+    unsigned long _window_next_active_time = 0;
+    bool _window_can_be_active = false;
     Window _window;
 
     const ScheduleEntry &_config;
@@ -67,8 +68,10 @@ public:
         _window.resize((long) _config.active_time_window);
         if (_window_can_be_active && _window.accumulated_time() >= _config.max_active_time) {
             _window_can_be_active = false;
+            _window_next_active_time = 0;
         } else if (!_window_can_be_active && _window.accumulated_time() == 0) {
             _window_can_be_active = true;
+            _window_next_active_time = millis() + _config.activation_offset * 1000;
         }
 
 #ifdef DEBUG
@@ -89,7 +92,7 @@ public:
         float value = sensor_data.get_sensor_value(_config.sensor);
         switch (_config.mode) {
             case PWM:
-                if (_window_can_be_active) {
+                if (_can_be_active()) {
                     duty = map_value(value, _config.min_sensor_value, _config.max_sensor_value,
                                      _config.min_duty, _config.max_duty);
                 } else {
@@ -100,9 +103,9 @@ public:
             case WINDOW: {
                 const bool active = map_value(value, _config.min_sensor_value,
                                               _config.max_sensor_value, 0, 1) == 1.0;
-                if (!_window_on && _window_can_be_active && active) {
+                if (!_window_on && _can_be_active() && active) {
                     _window_on = true;
-                } else if (_window_on && (!_window_can_be_active || !active)) {
+                } else if (_window_on && (!_can_be_active() || !active)) {
                     _window_on = false;
                 }
 
@@ -111,7 +114,7 @@ public:
             }
 
             case SCHEDULE:
-                duty = _window_can_be_active ? _config.max_duty : _config.min_duty;
+                duty = _can_be_active() ? _config.max_duty : _config.min_duty;
                 break;
 
             case ON:
@@ -134,5 +137,10 @@ public:
 
         _dst_member = duty * 100;
         return duty;
+    }
+
+private:
+    inline bool _can_be_active() const {
+        return _window_can_be_active && millis() >= _window_next_active_time;
     }
 };

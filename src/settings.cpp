@@ -27,6 +27,7 @@ const char *SCHEDULE_MIN_SENSOR_VALUE = "min_v";
 const char *SCHEDULE_MAX_SENSOR_VALUE = "max_v";
 const char *SCHEDULE_MAX_ACTIVE_TIME = "max_act_time";
 const char *SCHEDULE_ACTIVE_TIME_WINDOW = "act_time_w";
+const char *SCHEDULE_ACTIVATION_OFFSET = "act_offset";
 const char *ALERT_TEMPERATURE = "alert_temp";
 const char *ALERT_HUMIDITY = "alert_hum";
 const char *ALERT_CO2 = "alert_co2";
@@ -85,12 +86,13 @@ JsonObject write_alert(JsonObject obj, const AlertEntry &entry) {
 }
 
 JsonObject write_schedule(JsonObject obj, const ScheduleEntry &entry) {
-    obj[SCHEDULE_SENSOR] = entry.sensor;
     obj[SCHEDULE_MODE] = entry.mode;
+    obj[SCHEDULE_SENSOR] = entry.sensor;
     obj[SCHEDULE_MIN_SENSOR_VALUE] = entry.min_sensor_value;
     obj[SCHEDULE_MAX_SENSOR_VALUE] = entry.max_sensor_value;
     obj[SCHEDULE_MAX_ACTIVE_TIME] = entry.max_active_time;
     obj[SCHEDULE_ACTIVE_TIME_WINDOW] = entry.active_time_window;
+    obj[SCHEDULE_ACTIVATION_OFFSET] = entry.activation_offset;
     obj[SCHEDULE_PWM_FREQUENCY] = entry.pwm_frequency;
     obj[SCHEDULE_MIN_DUTY] = entry.min_duty;
     obj[SCHEDULE_MAX_DUTY] = entry.max_duty;
@@ -179,6 +181,7 @@ boolean readSchedule(WebServer &server, ScheduleEntry &entry) {
     ret = updateFieldFromRequest(server, SCHEDULE_MAX_SENSOR_VALUE, entry.max_sensor_value) || ret;
     ret = updateFieldFromRequest(server, SCHEDULE_MAX_ACTIVE_TIME, entry.max_active_time) || ret;
     ret = updateFieldFromRequest(server, SCHEDULE_ACTIVE_TIME_WINDOW, entry.active_time_window) || ret;
+    ret = updateFieldFromRequest(server, SCHEDULE_ACTIVATION_OFFSET, entry.activation_offset) || ret;
 
     return ret;
 }

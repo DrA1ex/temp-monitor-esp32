@@ -87,6 +87,7 @@ struct ScheduleEntry {
 
     unsigned long max_active_time;
     unsigned long active_time_window;
+    unsigned long activation_offset;
 
     unsigned long pwm_frequency;
 
