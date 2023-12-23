@@ -11,7 +11,7 @@
         }
 
         body {
-            margin-top: 1rem;
+            margin: 0;
             color: #555;
             font: 14px Helvetica Neue, Lucida Grande, Arial;
 
@@ -33,7 +33,7 @@
         h1 {
             font-size: 3rem;
             color: #34495e;
-            margin: 2rem auto 1rem;
+            margin: 1rem auto 1rem;
         }
 
         h2 {
@@ -117,16 +117,16 @@
 
         #status {
             top: 0;
-            background: white;
+            background: #fdfdfd;
         }
 
         #extra {
             bottom: 0;
-            background: #ece9e9;
+            background: #edeaea;
         }
 
         .status {
-            position: fixed;
+            position: sticky;
             left: 0;
             right: 0;
             margin: 0;
@@ -379,7 +379,7 @@
         }
 
         const Sensors = {
-            temp: {el: document.getElementById("temp"), fraction: 2},
+            temp: {el: document.getElementById("temp"), fraction: 1},
             hum: {el: document.getElementById("hum"), fraction: 0},
             co2: {el: document.getElementById("co2"), fraction: 0},
             fan: {el: document.getElementById("fan"), fraction: 0},
@@ -439,11 +439,11 @@
 <div class="bg"></div>
 <p id="status" class="status" style="visibility: collapse">
     Temp: <span id="temp">...</span> Cº,
-    Humidity: <span id=hum>...</span>%,
+    Hum: <span id=hum>...</span>%,
     CO2: <span id=co2>...</span>ppm,
     Fan: <span id=fan>...</span>%,
-    Humidifier: <span id=humr>...</span>%,
-    Latency: <span id="lat">...</span> ms
+    Hum'r: <span id=humr>...</span>%,
+    Lat: <span id="lat">...</span> ms
 </p>
 <div class="content">
     <h1>Settings</h1>
@@ -453,7 +453,7 @@
     <div id="actions" style="visibility: collapse">
         <a class="button button-danger" onclick="calibrateCo2(this)">CALIBRATE CO2</a>
         <a class="button button-danger" onclick="restart(this)">RESTART</a>
-        <a class="button button-danger" onclick="resetSettings(this)">RESET</a>
+        <a class="button button-danger" onclick="resetSettings(this)">RESET SETTINGS</a>
     </div>
 </div>
 
