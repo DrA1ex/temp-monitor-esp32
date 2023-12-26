@@ -8,11 +8,12 @@ To use this project, you will need to build a circuit based on the pin configura
 
 The following image showcases the Temperature Humidity Monitor:
 
-![Temperature Humidity Monitor](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/c39c1a66-210f-49ed-9787-668ba9ce9be8)
+![Temperature Humidity Monitor](https://github.com/DrA1ex/temp-monitor-esp32/assets/1194059/2370346e-2d92-4215-a3af-800c4f0f605d)
 
-For improved accuracy in measuring CO2 levels, the MQ-135 sensor has been replaced with the MHZ-19B sensor. Additionally, a DC-DC converter is used to power both the controller and the fan from a single DC-Adapter.
+For improved accuracy in measuring CO2 levels, the MQ-135 sensor has been replaced with the MHZ-19B sensor. Also, to improve temperature and humidity accuracy I switched off to BME280, you can find code with DHT in previous [commit](https://github.com/DrA1ex/temp-monitor-esp32/tree/0337aba872c37d82ffa03daa6c7b1ce8f0430638).
+Additionally, a DC-DC converter is used to power both the controller and the fan from a single DC-Adapter.
 
-Please keep in mind that depending on your specific setup, you may require additional components such as diodes, capacitors, transistors, and resistors.
+Keep in mind that depending on your specific setup, you may require additional components such as diodes, capacitors, transistors, and resistors.
 
 You also have the option to replicate the scheme and circuit that I used. The following images provide details:
 
