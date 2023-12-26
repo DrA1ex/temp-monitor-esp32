@@ -32,7 +32,8 @@ void setup() {
     http.setReuse(true);
     client.setCACert(SSL_CERT);
 
-    dht.begin();
+    bmeWire.begin(PIN_BME_SDA, PIN_BME_SCL, 1e5);
+    bme.begin(BME_ADDRESS, &bmeWire);
 
     co2Uart.begin(9600);
     Mhz19.begin(co2Uart);

@@ -115,8 +115,8 @@ void send_sensor_data() {
 void update_sensor_data() {
     const auto &config = settings.get();
     if (sensor_data.last_update == 0ul || (millis() - sensor_data.last_update) > config.sensor_update_interval) {
-        sensor_data.humidity = dht.readHumidity() + config.humidity_calibration;
-        sensor_data.temperature = dht.readTemperature() + config.temperature_calibration;
+        sensor_data.humidity = bme.readHumidity() + config.humidity_calibration;
+        sensor_data.temperature = bme.readTemperature() + config.temperature_calibration;
 
         auto co2 = Mhz19.getCO2(false);
         if (co2 >= 400 && co2 <= 5000) {
