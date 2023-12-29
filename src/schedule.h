@@ -102,7 +102,7 @@ public:
 
             case WINDOW: {
                 const bool active = map_value(value, _config.min_sensor_value,
-                                              _config.max_sensor_value, 0, 1) == 1.0;
+                                              _config.max_sensor_value, 0, 1) != 0.0f;
                 if (!_window_on && _can_be_active() && active) {
                     _window_on = true;
                 } else if (_window_on && (!_can_be_active() || !active)) {
